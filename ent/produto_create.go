@@ -12,6 +12,7 @@ import (
 	"github.com/jmrflora/bazarTudao/ent/itemordem"
 	"github.com/jmrflora/bazarTudao/ent/ordem"
 	"github.com/jmrflora/bazarTudao/ent/produto"
+	"github.com/jmrflora/bazarTudao/ent/stock"
 )
 
 // ProdutoCreate is the builder for creating a Produto entity.
@@ -52,6 +53,25 @@ func (pc *ProdutoCreate) AddOrdens(o ...*Ordem) *ProdutoCreate {
 		ids[i] = o[i].ID
 	}
 	return pc.AddOrdenIDs(ids...)
+}
+
+// SetStockID sets the "stock" edge to the Stock entity by ID.
+func (pc *ProdutoCreate) SetStockID(id int) *ProdutoCreate {
+	pc.mutation.SetStockID(id)
+	return pc
+}
+
+// SetNillableStockID sets the "stock" edge to the Stock entity by ID if the given value is not nil.
+func (pc *ProdutoCreate) SetNillableStockID(id *int) *ProdutoCreate {
+	if id != nil {
+		pc = pc.SetStockID(*id)
+	}
+	return pc
+}
+
+// SetStock sets the "stock" edge to the Stock entity.
+func (pc *ProdutoCreate) SetStock(s *Stock) *ProdutoCreate {
+	return pc.SetStockID(s.ID)
 }
 
 // AddItenIDs adds the "itens" edge to the ItemOrdem entity by IDs.
@@ -164,6 +184,23 @@ func (pc *ProdutoCreate) createSpec() (*Produto, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := pc.mutation.StockIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   produto.StockTable,
+			Columns: []string{produto.StockColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(stock.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.stock_produtos = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := pc.mutation.ItensIDs(); len(nodes) > 0 {

@@ -20,6 +20,8 @@ type Ordem struct {
 	ID int `json:"id,omitempty"`
 	// DataOrdem holds the value of the "data_ordem" field.
 	DataOrdem time.Time `json:"data_ordem,omitempty"`
+	// Completa holds the value of the "completa" field.
+	Completa bool `json:"completa,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the OrdemQuery when eager-loading is set.
 	Edges          OrdemEdges `json:"edges"`
@@ -74,6 +76,8 @@ func (*Ordem) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case ordem.FieldCompleta:
+			values[i] = new(sql.NullBool)
 		case ordem.FieldID:
 			values[i] = new(sql.NullInt64)
 		case ordem.FieldDataOrdem:
@@ -106,6 +110,12 @@ func (o *Ordem) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field data_ordem", values[i])
 			} else if value.Valid {
 				o.DataOrdem = value.Time
+			}
+		case ordem.FieldCompleta:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field completa", values[i])
+			} else if value.Valid {
+				o.Completa = value.Bool
 			}
 		case ordem.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -167,6 +177,9 @@ func (o *Ordem) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", o.ID))
 	builder.WriteString("data_ordem=")
 	builder.WriteString(o.DataOrdem.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("completa=")
+	builder.WriteString(fmt.Sprintf("%v", o.Completa))
 	builder.WriteByte(')')
 	return builder.String()
 }

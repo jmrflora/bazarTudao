@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/jmrflora/bazarTudao/ent/envio"
 	"github.com/jmrflora/bazarTudao/ent/itemordem"
 	"github.com/jmrflora/bazarTudao/ent/ordem"
 	"github.com/jmrflora/bazarTudao/ent/predicate"
@@ -25,6 +26,8 @@ type ItemOrdemQuery struct {
 	predicates  []predicate.ItemOrdem
 	withOrdem   *OrdemQuery
 	withProduto *ProdutoQuery
+	withEnvio   *EnvioQuery
+	withFKs     bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -98,6 +101,28 @@ func (ioq *ItemOrdemQuery) QueryProduto() *ProdutoQuery {
 			sqlgraph.From(itemordem.Table, itemordem.FieldID, selector),
 			sqlgraph.To(produto.Table, produto.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, itemordem.ProdutoTable, itemordem.ProdutoColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(ioq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryEnvio chains the current query on the "envio" edge.
+func (ioq *ItemOrdemQuery) QueryEnvio() *EnvioQuery {
+	query := (&EnvioClient{config: ioq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := ioq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := ioq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(itemordem.Table, itemordem.FieldID, selector),
+			sqlgraph.To(envio.Table, envio.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, itemordem.EnvioTable, itemordem.EnvioColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(ioq.driver.Dialect(), step)
 		return fromU, nil
@@ -299,6 +324,7 @@ func (ioq *ItemOrdemQuery) Clone() *ItemOrdemQuery {
 		predicates:  append([]predicate.ItemOrdem{}, ioq.predicates...),
 		withOrdem:   ioq.withOrdem.Clone(),
 		withProduto: ioq.withProduto.Clone(),
+		withEnvio:   ioq.withEnvio.Clone(),
 		// clone intermediate query.
 		sql:  ioq.sql.Clone(),
 		path: ioq.path,
@@ -324,6 +350,17 @@ func (ioq *ItemOrdemQuery) WithProduto(opts ...func(*ProdutoQuery)) *ItemOrdemQu
 		opt(query)
 	}
 	ioq.withProduto = query
+	return ioq
+}
+
+// WithEnvio tells the query-builder to eager-load the nodes that are connected to
+// the "envio" edge. The optional arguments are used to configure the query builder of the edge.
+func (ioq *ItemOrdemQuery) WithEnvio(opts ...func(*EnvioQuery)) *ItemOrdemQuery {
+	query := (&EnvioClient{config: ioq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	ioq.withEnvio = query
 	return ioq
 }
 
@@ -404,12 +441,20 @@ func (ioq *ItemOrdemQuery) prepareQuery(ctx context.Context) error {
 func (ioq *ItemOrdemQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*ItemOrdem, error) {
 	var (
 		nodes       = []*ItemOrdem{}
+		withFKs     = ioq.withFKs
 		_spec       = ioq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			ioq.withOrdem != nil,
 			ioq.withProduto != nil,
+			ioq.withEnvio != nil,
 		}
 	)
+	if ioq.withEnvio != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, itemordem.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*ItemOrdem).scanValues(nil, columns)
 	}
@@ -437,6 +482,12 @@ func (ioq *ItemOrdemQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*I
 	if query := ioq.withProduto; query != nil {
 		if err := ioq.loadProduto(ctx, query, nodes, nil,
 			func(n *ItemOrdem, e *Produto) { n.Edges.Produto = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := ioq.withEnvio; query != nil {
+		if err := ioq.loadEnvio(ctx, query, nodes, nil,
+			func(n *ItemOrdem, e *Envio) { n.Edges.Envio = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -494,6 +545,38 @@ func (ioq *ItemOrdemQuery) loadProduto(ctx context.Context, query *ProdutoQuery,
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "produto_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (ioq *ItemOrdemQuery) loadEnvio(ctx context.Context, query *EnvioQuery, nodes []*ItemOrdem, init func(*ItemOrdem), assign func(*ItemOrdem, *Envio)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*ItemOrdem)
+	for i := range nodes {
+		if nodes[i].envio_itens == nil {
+			continue
+		}
+		fk := *nodes[i].envio_itens
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(envio.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "envio_itens" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

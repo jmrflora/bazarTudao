@@ -14,8 +14,10 @@ const (
 	FieldID = "id"
 	// FieldQuantidade holds the string denoting the quantidade field in the database.
 	FieldQuantidade = "quantidade"
-	// FieldPreco holds the string denoting the preco field in the database.
-	FieldPreco = "preco"
+	// FieldPrecoUnitario holds the string denoting the preco_unitario field in the database.
+	FieldPrecoUnitario = "preco_unitario"
+	// FieldPrecoTotal holds the string denoting the preco_total field in the database.
+	FieldPrecoTotal = "preco_total"
 	// FieldOrdemID holds the string denoting the ordem_id field in the database.
 	FieldOrdemID = "ordem_id"
 	// FieldProdutoID holds the string denoting the produto_id field in the database.
@@ -24,6 +26,8 @@ const (
 	EdgeOrdem = "ordem"
 	// EdgeProduto holds the string denoting the produto edge name in mutations.
 	EdgeProduto = "produto"
+	// EdgeEnvio holds the string denoting the envio edge name in mutations.
+	EdgeEnvio = "envio"
 	// Table holds the table name of the itemordem in the database.
 	Table = "item_ordems"
 	// OrdemTable is the table that holds the ordem relation/edge.
@@ -40,21 +44,40 @@ const (
 	ProdutoInverseTable = "produtos"
 	// ProdutoColumn is the table column denoting the produto relation/edge.
 	ProdutoColumn = "produto_id"
+	// EnvioTable is the table that holds the envio relation/edge.
+	EnvioTable = "item_ordems"
+	// EnvioInverseTable is the table name for the Envio entity.
+	// It exists in this package in order to avoid circular dependency with the "envio" package.
+	EnvioInverseTable = "envios"
+	// EnvioColumn is the table column denoting the envio relation/edge.
+	EnvioColumn = "envio_itens"
 )
 
 // Columns holds all SQL columns for itemordem fields.
 var Columns = []string{
 	FieldID,
 	FieldQuantidade,
-	FieldPreco,
+	FieldPrecoUnitario,
+	FieldPrecoTotal,
 	FieldOrdemID,
 	FieldProdutoID,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the "item_ordems"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"envio_itens",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -74,9 +97,14 @@ func ByQuantidade(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldQuantidade, opts...).ToFunc()
 }
 
-// ByPreco orders the results by the preco field.
-func ByPreco(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldPreco, opts...).ToFunc()
+// ByPrecoUnitario orders the results by the preco_unitario field.
+func ByPrecoUnitario(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPrecoUnitario, opts...).ToFunc()
+}
+
+// ByPrecoTotal orders the results by the preco_total field.
+func ByPrecoTotal(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPrecoTotal, opts...).ToFunc()
 }
 
 // ByOrdemID orders the results by the ordem_id field.
@@ -102,6 +130,13 @@ func ByProdutoField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newProdutoStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByEnvioField orders the results by envio field.
+func ByEnvioField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newEnvioStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newOrdemStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -114,5 +149,12 @@ func newProdutoStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ProdutoInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, ProdutoTable, ProdutoColumn),
+	)
+}
+func newEnvioStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(EnvioInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, EnvioTable, EnvioColumn),
 	)
 }

@@ -18,6 +18,7 @@ func (Cliente) Fields() []ent.Field {
 		field.String("nome"),
 		field.String("cpf").Unique(),
 		field.String("telefone"),
+		field.String("endereco_entrega"),
 	}
 }
 

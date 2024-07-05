@@ -20,6 +20,8 @@ const (
 	FieldQuantNoEstoque = "quant_no_estoque"
 	// EdgeOrdens holds the string denoting the ordens edge name in mutations.
 	EdgeOrdens = "ordens"
+	// EdgeStock holds the string denoting the stock edge name in mutations.
+	EdgeStock = "stock"
 	// EdgeItens holds the string denoting the itens edge name in mutations.
 	EdgeItens = "itens"
 	// Table holds the table name of the produto in the database.
@@ -29,6 +31,13 @@ const (
 	// OrdensInverseTable is the table name for the Ordem entity.
 	// It exists in this package in order to avoid circular dependency with the "ordem" package.
 	OrdensInverseTable = "ordems"
+	// StockTable is the table that holds the stock relation/edge.
+	StockTable = "produtos"
+	// StockInverseTable is the table name for the Stock entity.
+	// It exists in this package in order to avoid circular dependency with the "stock" package.
+	StockInverseTable = "stocks"
+	// StockColumn is the table column denoting the stock relation/edge.
+	StockColumn = "stock_produtos"
 	// ItensTable is the table that holds the itens relation/edge.
 	ItensTable = "item_ordems"
 	// ItensInverseTable is the table name for the ItemOrdem entity.
@@ -46,6 +55,12 @@ var Columns = []string{
 	FieldQuantNoEstoque,
 }
 
+// ForeignKeys holds the SQL foreign-keys that are owned by the "produtos"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"stock_produtos",
+}
+
 var (
 	// OrdensPrimaryKey and OrdensColumn2 are the table columns denoting the
 	// primary key for the ordens relation (M2M).
@@ -56,6 +71,11 @@ var (
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -99,6 +119,13 @@ func ByOrdens(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByStockField orders the results by stock field.
+func ByStockField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newStockStep(), sql.OrderByField(field, opts...))
+	}
+}
+
 // ByItensCount orders the results by itens count.
 func ByItensCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -117,6 +144,13 @@ func newOrdensStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(OrdensInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2M, true, OrdensTable, OrdensPrimaryKey...),
+	)
+}
+func newStockStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(StockInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, StockTable, StockColumn),
 	)
 }
 func newItensStep() *sqlgraph.Step {

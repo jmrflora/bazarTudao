@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/jmrflora/bazarTudao/ent/envio"
 	"github.com/jmrflora/bazarTudao/ent/itemordem"
 	"github.com/jmrflora/bazarTudao/ent/ordem"
 	"github.com/jmrflora/bazarTudao/ent/produto"
@@ -27,9 +28,15 @@ func (ioc *ItemOrdemCreate) SetQuantidade(i int) *ItemOrdemCreate {
 	return ioc
 }
 
-// SetPreco sets the "preco" field.
-func (ioc *ItemOrdemCreate) SetPreco(f float64) *ItemOrdemCreate {
-	ioc.mutation.SetPreco(f)
+// SetPrecoUnitario sets the "preco_unitario" field.
+func (ioc *ItemOrdemCreate) SetPrecoUnitario(f float64) *ItemOrdemCreate {
+	ioc.mutation.SetPrecoUnitario(f)
+	return ioc
+}
+
+// SetPrecoTotal sets the "preco_total" field.
+func (ioc *ItemOrdemCreate) SetPrecoTotal(f float64) *ItemOrdemCreate {
+	ioc.mutation.SetPrecoTotal(f)
 	return ioc
 }
 
@@ -53,6 +60,25 @@ func (ioc *ItemOrdemCreate) SetOrdem(o *Ordem) *ItemOrdemCreate {
 // SetProduto sets the "produto" edge to the Produto entity.
 func (ioc *ItemOrdemCreate) SetProduto(p *Produto) *ItemOrdemCreate {
 	return ioc.SetProdutoID(p.ID)
+}
+
+// SetEnvioID sets the "envio" edge to the Envio entity by ID.
+func (ioc *ItemOrdemCreate) SetEnvioID(id int) *ItemOrdemCreate {
+	ioc.mutation.SetEnvioID(id)
+	return ioc
+}
+
+// SetNillableEnvioID sets the "envio" edge to the Envio entity by ID if the given value is not nil.
+func (ioc *ItemOrdemCreate) SetNillableEnvioID(id *int) *ItemOrdemCreate {
+	if id != nil {
+		ioc = ioc.SetEnvioID(*id)
+	}
+	return ioc
+}
+
+// SetEnvio sets the "envio" edge to the Envio entity.
+func (ioc *ItemOrdemCreate) SetEnvio(e *Envio) *ItemOrdemCreate {
+	return ioc.SetEnvioID(e.ID)
 }
 
 // Mutation returns the ItemOrdemMutation object of the builder.
@@ -92,8 +118,11 @@ func (ioc *ItemOrdemCreate) check() error {
 	if _, ok := ioc.mutation.Quantidade(); !ok {
 		return &ValidationError{Name: "quantidade", err: errors.New(`ent: missing required field "ItemOrdem.quantidade"`)}
 	}
-	if _, ok := ioc.mutation.Preco(); !ok {
-		return &ValidationError{Name: "preco", err: errors.New(`ent: missing required field "ItemOrdem.preco"`)}
+	if _, ok := ioc.mutation.PrecoUnitario(); !ok {
+		return &ValidationError{Name: "preco_unitario", err: errors.New(`ent: missing required field "ItemOrdem.preco_unitario"`)}
+	}
+	if _, ok := ioc.mutation.PrecoTotal(); !ok {
+		return &ValidationError{Name: "preco_total", err: errors.New(`ent: missing required field "ItemOrdem.preco_total"`)}
 	}
 	if _, ok := ioc.mutation.OrdemID(); !ok {
 		return &ValidationError{Name: "ordem_id", err: errors.New(`ent: missing required field "ItemOrdem.ordem_id"`)}
@@ -137,9 +166,13 @@ func (ioc *ItemOrdemCreate) createSpec() (*ItemOrdem, *sqlgraph.CreateSpec) {
 		_spec.SetField(itemordem.FieldQuantidade, field.TypeInt, value)
 		_node.Quantidade = value
 	}
-	if value, ok := ioc.mutation.Preco(); ok {
-		_spec.SetField(itemordem.FieldPreco, field.TypeFloat64, value)
-		_node.Preco = value
+	if value, ok := ioc.mutation.PrecoUnitario(); ok {
+		_spec.SetField(itemordem.FieldPrecoUnitario, field.TypeFloat64, value)
+		_node.PrecoUnitario = value
+	}
+	if value, ok := ioc.mutation.PrecoTotal(); ok {
+		_spec.SetField(itemordem.FieldPrecoTotal, field.TypeFloat64, value)
+		_node.PrecoTotal = value
 	}
 	if nodes := ioc.mutation.OrdemIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -173,6 +206,23 @@ func (ioc *ItemOrdemCreate) createSpec() (*ItemOrdem, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.ProdutoID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ioc.mutation.EnvioIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   itemordem.EnvioTable,
+			Columns: []string{itemordem.EnvioColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(envio.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.envio_itens = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

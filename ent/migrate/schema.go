@@ -22,11 +22,24 @@ var (
 		Columns:    ClientesColumns,
 		PrimaryKey: []*schema.Column{ClientesColumns[0]},
 	}
+	// EnviosColumns holds the columns for the "envios" table.
+	EnviosColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "data", Type: field.TypeTime},
+	}
+	// EnviosTable holds the schema information for the "envios" table.
+	EnviosTable = &schema.Table{
+		Name:       "envios",
+		Columns:    EnviosColumns,
+		PrimaryKey: []*schema.Column{EnviosColumns[0]},
+	}
 	// ItemOrdemsColumns holds the columns for the "item_ordems" table.
 	ItemOrdemsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "quantidade", Type: field.TypeInt},
-		{Name: "preco", Type: field.TypeFloat64, SchemaType: map[string]string{"postgres": "numeric(8,2)"}},
+		{Name: "preco_unitario", Type: field.TypeFloat64, SchemaType: map[string]string{"postgres": "numeric(8,2)"}},
+		{Name: "preco_total", Type: field.TypeFloat64, SchemaType: map[string]string{"postgres": "numeric(8,2)"}},
+		{Name: "envio_itens", Type: field.TypeInt, Nullable: true},
 		{Name: "ordem_id", Type: field.TypeInt},
 		{Name: "produto_id", Type: field.TypeInt},
 	}
@@ -37,14 +50,20 @@ var (
 		PrimaryKey: []*schema.Column{ItemOrdemsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
+				Symbol:     "item_ordems_envios_itens",
+				Columns:    []*schema.Column{ItemOrdemsColumns[4]},
+				RefColumns: []*schema.Column{EnviosColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
 				Symbol:     "item_ordems_ordems_ordem",
-				Columns:    []*schema.Column{ItemOrdemsColumns[3]},
+				Columns:    []*schema.Column{ItemOrdemsColumns[5]},
 				RefColumns: []*schema.Column{OrdemsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "item_ordems_produtos_produto",
-				Columns:    []*schema.Column{ItemOrdemsColumns[4]},
+				Columns:    []*schema.Column{ItemOrdemsColumns[6]},
 				RefColumns: []*schema.Column{ProdutosColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -53,7 +72,7 @@ var (
 			{
 				Name:    "itemordem_ordem_id_produto_id",
 				Unique:  true,
-				Columns: []*schema.Column{ItemOrdemsColumns[3], ItemOrdemsColumns[4]},
+				Columns: []*schema.Column{ItemOrdemsColumns[5], ItemOrdemsColumns[6]},
 			},
 		},
 	}
@@ -61,6 +80,7 @@ var (
 	OrdemsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "data_ordem", Type: field.TypeTime},
+		{Name: "completa", Type: field.TypeBool, Default: false},
 		{Name: "cliente_ordens", Type: field.TypeInt, Nullable: true},
 	}
 	// OrdemsTable holds the schema information for the "ordems" table.
@@ -71,7 +91,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "ordems_clientes_ordens",
-				Columns:    []*schema.Column{OrdemsColumns[2]},
+				Columns:    []*schema.Column{OrdemsColumns[3]},
 				RefColumns: []*schema.Column{ClientesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -83,24 +103,49 @@ var (
 		{Name: "sku", Type: field.TypeString, Unique: true},
 		{Name: "nome", Type: field.TypeString},
 		{Name: "quant_no_estoque", Type: field.TypeInt},
+		{Name: "stock_produtos", Type: field.TypeInt, Nullable: true},
 	}
 	// ProdutosTable holds the schema information for the "produtos" table.
 	ProdutosTable = &schema.Table{
 		Name:       "produtos",
 		Columns:    ProdutosColumns,
 		PrimaryKey: []*schema.Column{ProdutosColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "produtos_stocks_produtos",
+				Columns:    []*schema.Column{ProdutosColumns[4]},
+				RefColumns: []*schema.Column{StocksColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// StocksColumns holds the columns for the "stocks" table.
+	StocksColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "data_movimento", Type: field.TypeTime},
+		{Name: "quantidade", Type: field.TypeInt},
+	}
+	// StocksTable holds the schema information for the "stocks" table.
+	StocksTable = &schema.Table{
+		Name:       "stocks",
+		Columns:    StocksColumns,
+		PrimaryKey: []*schema.Column{StocksColumns[0]},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		ClientesTable,
+		EnviosTable,
 		ItemOrdemsTable,
 		OrdemsTable,
 		ProdutosTable,
+		StocksTable,
 	}
 )
 
 func init() {
-	ItemOrdemsTable.ForeignKeys[0].RefTable = OrdemsTable
-	ItemOrdemsTable.ForeignKeys[1].RefTable = ProdutosTable
+	ItemOrdemsTable.ForeignKeys[0].RefTable = EnviosTable
+	ItemOrdemsTable.ForeignKeys[1].RefTable = OrdemsTable
+	ItemOrdemsTable.ForeignKeys[2].RefTable = ProdutosTable
 	OrdemsTable.ForeignKeys[0].RefTable = ClientesTable
+	ProdutosTable.ForeignKeys[0].RefTable = StocksTable
 }

@@ -29,6 +29,28 @@ func (oc *OrdemCreate) SetDataOrdem(t time.Time) *OrdemCreate {
 	return oc
 }
 
+// SetNillableDataOrdem sets the "data_ordem" field if the given value is not nil.
+func (oc *OrdemCreate) SetNillableDataOrdem(t *time.Time) *OrdemCreate {
+	if t != nil {
+		oc.SetDataOrdem(*t)
+	}
+	return oc
+}
+
+// SetCompleta sets the "completa" field.
+func (oc *OrdemCreate) SetCompleta(b bool) *OrdemCreate {
+	oc.mutation.SetCompleta(b)
+	return oc
+}
+
+// SetNillableCompleta sets the "completa" field if the given value is not nil.
+func (oc *OrdemCreate) SetNillableCompleta(b *bool) *OrdemCreate {
+	if b != nil {
+		oc.SetCompleta(*b)
+	}
+	return oc
+}
+
 // AddProdutoIDs adds the "produtos" edge to the Produto entity by IDs.
 func (oc *OrdemCreate) AddProdutoIDs(ids ...int) *OrdemCreate {
 	oc.mutation.AddProdutoIDs(ids...)
@@ -85,6 +107,7 @@ func (oc *OrdemCreate) Mutation() *OrdemMutation {
 
 // Save creates the Ordem in the database.
 func (oc *OrdemCreate) Save(ctx context.Context) (*Ordem, error) {
+	oc.defaults()
 	return withHooks(ctx, oc.sqlSave, oc.mutation, oc.hooks)
 }
 
@@ -110,10 +133,25 @@ func (oc *OrdemCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (oc *OrdemCreate) defaults() {
+	if _, ok := oc.mutation.DataOrdem(); !ok {
+		v := ordem.DefaultDataOrdem()
+		oc.mutation.SetDataOrdem(v)
+	}
+	if _, ok := oc.mutation.Completa(); !ok {
+		v := ordem.DefaultCompleta
+		oc.mutation.SetCompleta(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (oc *OrdemCreate) check() error {
 	if _, ok := oc.mutation.DataOrdem(); !ok {
 		return &ValidationError{Name: "data_ordem", err: errors.New(`ent: missing required field "Ordem.data_ordem"`)}
+	}
+	if _, ok := oc.mutation.Completa(); !ok {
+		return &ValidationError{Name: "completa", err: errors.New(`ent: missing required field "Ordem.completa"`)}
 	}
 	return nil
 }
@@ -144,6 +182,10 @@ func (oc *OrdemCreate) createSpec() (*Ordem, *sqlgraph.CreateSpec) {
 	if value, ok := oc.mutation.DataOrdem(); ok {
 		_spec.SetField(ordem.FieldDataOrdem, field.TypeTime, value)
 		_node.DataOrdem = value
+	}
+	if value, ok := oc.mutation.Completa(); ok {
+		_spec.SetField(ordem.FieldCompleta, field.TypeBool, value)
+		_node.Completa = value
 	}
 	if nodes := oc.mutation.ProdutosIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -215,6 +257,7 @@ func (ocb *OrdemCreateBulk) Save(ctx context.Context) ([]*Ordem, error) {
 	for i := range ocb.builders {
 		func(i int, root context.Context) {
 			builder := ocb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*OrdemMutation)
 				if !ok {

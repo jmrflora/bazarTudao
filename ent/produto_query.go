@@ -15,6 +15,7 @@ import (
 	"github.com/jmrflora/bazarTudao/ent/ordem"
 	"github.com/jmrflora/bazarTudao/ent/predicate"
 	"github.com/jmrflora/bazarTudao/ent/produto"
+	"github.com/jmrflora/bazarTudao/ent/stock"
 )
 
 // ProdutoQuery is the builder for querying Produto entities.
@@ -25,7 +26,9 @@ type ProdutoQuery struct {
 	inters     []Interceptor
 	predicates []predicate.Produto
 	withOrdens *OrdemQuery
+	withStock  *StockQuery
 	withItens  *ItemOrdemQuery
+	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -77,6 +80,28 @@ func (pq *ProdutoQuery) QueryOrdens() *OrdemQuery {
 			sqlgraph.From(produto.Table, produto.FieldID, selector),
 			sqlgraph.To(ordem.Table, ordem.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, produto.OrdensTable, produto.OrdensPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryStock chains the current query on the "stock" edge.
+func (pq *ProdutoQuery) QueryStock() *StockQuery {
+	query := (&StockClient{config: pq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(produto.Table, produto.FieldID, selector),
+			sqlgraph.To(stock.Table, stock.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, produto.StockTable, produto.StockColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -299,6 +324,7 @@ func (pq *ProdutoQuery) Clone() *ProdutoQuery {
 		inters:     append([]Interceptor{}, pq.inters...),
 		predicates: append([]predicate.Produto{}, pq.predicates...),
 		withOrdens: pq.withOrdens.Clone(),
+		withStock:  pq.withStock.Clone(),
 		withItens:  pq.withItens.Clone(),
 		// clone intermediate query.
 		sql:  pq.sql.Clone(),
@@ -314,6 +340,17 @@ func (pq *ProdutoQuery) WithOrdens(opts ...func(*OrdemQuery)) *ProdutoQuery {
 		opt(query)
 	}
 	pq.withOrdens = query
+	return pq
+}
+
+// WithStock tells the query-builder to eager-load the nodes that are connected to
+// the "stock" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *ProdutoQuery) WithStock(opts ...func(*StockQuery)) *ProdutoQuery {
+	query := (&StockClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withStock = query
 	return pq
 }
 
@@ -405,12 +442,20 @@ func (pq *ProdutoQuery) prepareQuery(ctx context.Context) error {
 func (pq *ProdutoQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Produto, error) {
 	var (
 		nodes       = []*Produto{}
+		withFKs     = pq.withFKs
 		_spec       = pq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			pq.withOrdens != nil,
+			pq.withStock != nil,
 			pq.withItens != nil,
 		}
 	)
+	if pq.withStock != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, produto.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Produto).scanValues(nil, columns)
 	}
@@ -433,6 +478,12 @@ func (pq *ProdutoQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Prod
 		if err := pq.loadOrdens(ctx, query, nodes,
 			func(n *Produto) { n.Edges.Ordens = []*Ordem{} },
 			func(n *Produto, e *Ordem) { n.Edges.Ordens = append(n.Edges.Ordens, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := pq.withStock; query != nil {
+		if err := pq.loadStock(ctx, query, nodes, nil,
+			func(n *Produto, e *Stock) { n.Edges.Stock = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -507,6 +558,38 @@ func (pq *ProdutoQuery) loadOrdens(ctx context.Context, query *OrdemQuery, nodes
 	}
 	return nil
 }
+func (pq *ProdutoQuery) loadStock(ctx context.Context, query *StockQuery, nodes []*Produto, init func(*Produto), assign func(*Produto, *Stock)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Produto)
+	for i := range nodes {
+		if nodes[i].stock_produtos == nil {
+			continue
+		}
+		fk := *nodes[i].stock_produtos
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(stock.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "stock_produtos" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 func (pq *ProdutoQuery) loadItens(ctx context.Context, query *ItemOrdemQuery, nodes []*Produto, init func(*Produto), assign func(*Produto, *ItemOrdem)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*Produto)
@@ -517,6 +600,7 @@ func (pq *ProdutoQuery) loadItens(ctx context.Context, query *ItemOrdemQuery, no
 			init(nodes[i])
 		}
 	}
+	query.withFKs = true
 	if len(query.ctx.Fields) > 0 {
 		query.ctx.AppendFieldOnce(itemordem.FieldProdutoID)
 	}

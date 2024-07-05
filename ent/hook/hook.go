@@ -21,6 +21,18 @@ func (f ClienteFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, err
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ClienteMutation", m)
 }
 
+// The EnvioFunc type is an adapter to allow the use of ordinary
+// function as Envio mutator.
+type EnvioFunc func(context.Context, *ent.EnvioMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f EnvioFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.EnvioMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EnvioMutation", m)
+}
+
 // The ItemOrdemFunc type is an adapter to allow the use of ordinary
 // function as ItemOrdem mutator.
 type ItemOrdemFunc func(context.Context, *ent.ItemOrdemMutation) (ent.Value, error)
@@ -55,6 +67,18 @@ func (f ProdutoFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, err
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ProdutoMutation", m)
+}
+
+// The StockFunc type is an adapter to allow the use of ordinary
+// function as Stock mutator.
+type StockFunc func(context.Context, *ent.StockMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f StockFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.StockMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.StockMutation", m)
 }
 
 // Condition is a hook condition function.

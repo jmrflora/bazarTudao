@@ -8,6 +8,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/jmrflora/bazarTudao/ent/envio"
 	"github.com/jmrflora/bazarTudao/ent/itemordem"
 	"github.com/jmrflora/bazarTudao/ent/ordem"
 	"github.com/jmrflora/bazarTudao/ent/produto"
@@ -20,8 +21,10 @@ type ItemOrdem struct {
 	ID int `json:"id,omitempty"`
 	// Quantidade holds the value of the "quantidade" field.
 	Quantidade int `json:"quantidade,omitempty"`
-	// Preco holds the value of the "preco" field.
-	Preco float64 `json:"preco,omitempty"`
+	// PrecoUnitario holds the value of the "preco_unitario" field.
+	PrecoUnitario float64 `json:"preco_unitario,omitempty"`
+	// PrecoTotal holds the value of the "preco_total" field.
+	PrecoTotal float64 `json:"preco_total,omitempty"`
 	// OrdemID holds the value of the "ordem_id" field.
 	OrdemID int `json:"ordem_id,omitempty"`
 	// ProdutoID holds the value of the "produto_id" field.
@@ -29,6 +32,7 @@ type ItemOrdem struct {
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ItemOrdemQuery when eager-loading is set.
 	Edges        ItemOrdemEdges `json:"edges"`
+	envio_itens  *int
 	selectValues sql.SelectValues
 }
 
@@ -38,9 +42,11 @@ type ItemOrdemEdges struct {
 	Ordem *Ordem `json:"ordem,omitempty"`
 	// Produto holds the value of the produto edge.
 	Produto *Produto `json:"produto,omitempty"`
+	// Envio holds the value of the envio edge.
+	Envio *Envio `json:"envio,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // OrdemOrErr returns the Ordem value or an error if the edge
@@ -65,14 +71,27 @@ func (e ItemOrdemEdges) ProdutoOrErr() (*Produto, error) {
 	return nil, &NotLoadedError{edge: "produto"}
 }
 
+// EnvioOrErr returns the Envio value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ItemOrdemEdges) EnvioOrErr() (*Envio, error) {
+	if e.Envio != nil {
+		return e.Envio, nil
+	} else if e.loadedTypes[2] {
+		return nil, &NotFoundError{label: envio.Label}
+	}
+	return nil, &NotLoadedError{edge: "envio"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*ItemOrdem) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case itemordem.FieldPreco:
+		case itemordem.FieldPrecoUnitario, itemordem.FieldPrecoTotal:
 			values[i] = new(sql.NullFloat64)
 		case itemordem.FieldID, itemordem.FieldQuantidade, itemordem.FieldOrdemID, itemordem.FieldProdutoID:
+			values[i] = new(sql.NullInt64)
+		case itemordem.ForeignKeys[0]: // envio_itens
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -101,11 +120,17 @@ func (io *ItemOrdem) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				io.Quantidade = int(value.Int64)
 			}
-		case itemordem.FieldPreco:
+		case itemordem.FieldPrecoUnitario:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
-				return fmt.Errorf("unexpected type %T for field preco", values[i])
+				return fmt.Errorf("unexpected type %T for field preco_unitario", values[i])
 			} else if value.Valid {
-				io.Preco = value.Float64
+				io.PrecoUnitario = value.Float64
+			}
+		case itemordem.FieldPrecoTotal:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field preco_total", values[i])
+			} else if value.Valid {
+				io.PrecoTotal = value.Float64
 			}
 		case itemordem.FieldOrdemID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -118,6 +143,13 @@ func (io *ItemOrdem) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field produto_id", values[i])
 			} else if value.Valid {
 				io.ProdutoID = int(value.Int64)
+			}
+		case itemordem.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field envio_itens", value)
+			} else if value.Valid {
+				io.envio_itens = new(int)
+				*io.envio_itens = int(value.Int64)
 			}
 		default:
 			io.selectValues.Set(columns[i], values[i])
@@ -140,6 +172,11 @@ func (io *ItemOrdem) QueryOrdem() *OrdemQuery {
 // QueryProduto queries the "produto" edge of the ItemOrdem entity.
 func (io *ItemOrdem) QueryProduto() *ProdutoQuery {
 	return NewItemOrdemClient(io.config).QueryProduto(io)
+}
+
+// QueryEnvio queries the "envio" edge of the ItemOrdem entity.
+func (io *ItemOrdem) QueryEnvio() *EnvioQuery {
+	return NewItemOrdemClient(io.config).QueryEnvio(io)
 }
 
 // Update returns a builder for updating this ItemOrdem.
@@ -168,8 +205,11 @@ func (io *ItemOrdem) String() string {
 	builder.WriteString("quantidade=")
 	builder.WriteString(fmt.Sprintf("%v", io.Quantidade))
 	builder.WriteString(", ")
-	builder.WriteString("preco=")
-	builder.WriteString(fmt.Sprintf("%v", io.Preco))
+	builder.WriteString("preco_unitario=")
+	builder.WriteString(fmt.Sprintf("%v", io.PrecoUnitario))
+	builder.WriteString(", ")
+	builder.WriteString("preco_total=")
+	builder.WriteString(fmt.Sprintf("%v", io.PrecoTotal))
 	builder.WriteString(", ")
 	builder.WriteString("ordem_id=")
 	builder.WriteString(fmt.Sprintf("%v", io.OrdemID))

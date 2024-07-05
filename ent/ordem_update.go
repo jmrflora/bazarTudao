@@ -45,6 +45,20 @@ func (ou *OrdemUpdate) SetNillableDataOrdem(t *time.Time) *OrdemUpdate {
 	return ou
 }
 
+// SetCompleta sets the "completa" field.
+func (ou *OrdemUpdate) SetCompleta(b bool) *OrdemUpdate {
+	ou.mutation.SetCompleta(b)
+	return ou
+}
+
+// SetNillableCompleta sets the "completa" field if the given value is not nil.
+func (ou *OrdemUpdate) SetNillableCompleta(b *bool) *OrdemUpdate {
+	if b != nil {
+		ou.SetCompleta(*b)
+	}
+	return ou
+}
+
 // AddProdutoIDs adds the "produtos" edge to the Produto entity by IDs.
 func (ou *OrdemUpdate) AddProdutoIDs(ids ...int) *OrdemUpdate {
 	ou.mutation.AddProdutoIDs(ids...)
@@ -185,6 +199,9 @@ func (ou *OrdemUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := ou.mutation.DataOrdem(); ok {
 		_spec.SetField(ordem.FieldDataOrdem, field.TypeTime, value)
+	}
+	if value, ok := ou.mutation.Completa(); ok {
+		_spec.SetField(ordem.FieldCompleta, field.TypeBool, value)
 	}
 	if ou.mutation.ProdutosCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -335,6 +352,20 @@ func (ouo *OrdemUpdateOne) SetDataOrdem(t time.Time) *OrdemUpdateOne {
 func (ouo *OrdemUpdateOne) SetNillableDataOrdem(t *time.Time) *OrdemUpdateOne {
 	if t != nil {
 		ouo.SetDataOrdem(*t)
+	}
+	return ouo
+}
+
+// SetCompleta sets the "completa" field.
+func (ouo *OrdemUpdateOne) SetCompleta(b bool) *OrdemUpdateOne {
+	ouo.mutation.SetCompleta(b)
+	return ouo
+}
+
+// SetNillableCompleta sets the "completa" field if the given value is not nil.
+func (ouo *OrdemUpdateOne) SetNillableCompleta(b *bool) *OrdemUpdateOne {
+	if b != nil {
+		ouo.SetCompleta(*b)
 	}
 	return ouo
 }
@@ -509,6 +540,9 @@ func (ouo *OrdemUpdateOne) sqlSave(ctx context.Context) (_node *Ordem, err error
 	}
 	if value, ok := ouo.mutation.DataOrdem(); ok {
 		_spec.SetField(ordem.FieldDataOrdem, field.TypeTime, value)
+	}
+	if value, ok := ouo.mutation.Completa(); ok {
+		_spec.SetField(ordem.FieldCompleta, field.TypeBool, value)
 	}
 	if ouo.mutation.ProdutosCleared() {
 		edge := &sqlgraph.EdgeSpec{

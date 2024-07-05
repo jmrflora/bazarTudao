@@ -261,6 +261,29 @@ func HasOrdensWith(preds ...predicate.Ordem) predicate.Produto {
 	})
 }
 
+// HasStock applies the HasEdge predicate on the "stock" edge.
+func HasStock() predicate.Produto {
+	return predicate.Produto(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, StockTable, StockColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasStockWith applies the HasEdge predicate on the "stock" edge with a given conditions (other predicates).
+func HasStockWith(preds ...predicate.Stock) predicate.Produto {
+	return predicate.Produto(func(s *sql.Selector) {
+		step := newStockStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasItens applies the HasEdge predicate on the "itens" edge.
 func HasItens() predicate.Produto {
 	return predicate.Produto(func(s *sql.Selector) {

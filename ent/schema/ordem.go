@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"time"
+
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -14,7 +16,8 @@ type Ordem struct {
 // Fields of the Ordem.
 func (Ordem) Fields() []ent.Field {
 	return []ent.Field{
-		field.Time("data_ordem"),
+		field.Time("data_ordem").Default(time.Now),
+		field.Bool("completa").Default(false),
 	}
 }
 

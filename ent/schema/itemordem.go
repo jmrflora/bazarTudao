@@ -16,7 +16,10 @@ type ItemOrdem struct {
 func (ItemOrdem) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("quantidade"),
-		field.Float("preco").SchemaType(map[string]string{
+		field.Float("preco_unitario").SchemaType(map[string]string{
+			dialect.Postgres: "numeric(8,2)",
+		}),
+		field.Float("preco_total").SchemaType(map[string]string{
 			dialect.Postgres: "numeric(8,2)",
 		}),
 		field.Int("ordem_id"),
@@ -35,5 +38,6 @@ func (ItemOrdem) Edges() []ent.Edge {
 			Required().
 			Unique().
 			Field("produto_id"),
+		edge.From("envio", Envio.Type).Ref("itens").Unique(),
 	}
 }

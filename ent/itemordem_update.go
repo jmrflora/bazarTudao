@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/jmrflora/bazarTudao/ent/envio"
 	"github.com/jmrflora/bazarTudao/ent/itemordem"
 	"github.com/jmrflora/bazarTudao/ent/ordem"
 	"github.com/jmrflora/bazarTudao/ent/predicate"
@@ -50,24 +51,45 @@ func (iou *ItemOrdemUpdate) AddQuantidade(i int) *ItemOrdemUpdate {
 	return iou
 }
 
-// SetPreco sets the "preco" field.
-func (iou *ItemOrdemUpdate) SetPreco(f float64) *ItemOrdemUpdate {
-	iou.mutation.ResetPreco()
-	iou.mutation.SetPreco(f)
+// SetPrecoUnitario sets the "preco_unitario" field.
+func (iou *ItemOrdemUpdate) SetPrecoUnitario(f float64) *ItemOrdemUpdate {
+	iou.mutation.ResetPrecoUnitario()
+	iou.mutation.SetPrecoUnitario(f)
 	return iou
 }
 
-// SetNillablePreco sets the "preco" field if the given value is not nil.
-func (iou *ItemOrdemUpdate) SetNillablePreco(f *float64) *ItemOrdemUpdate {
+// SetNillablePrecoUnitario sets the "preco_unitario" field if the given value is not nil.
+func (iou *ItemOrdemUpdate) SetNillablePrecoUnitario(f *float64) *ItemOrdemUpdate {
 	if f != nil {
-		iou.SetPreco(*f)
+		iou.SetPrecoUnitario(*f)
 	}
 	return iou
 }
 
-// AddPreco adds f to the "preco" field.
-func (iou *ItemOrdemUpdate) AddPreco(f float64) *ItemOrdemUpdate {
-	iou.mutation.AddPreco(f)
+// AddPrecoUnitario adds f to the "preco_unitario" field.
+func (iou *ItemOrdemUpdate) AddPrecoUnitario(f float64) *ItemOrdemUpdate {
+	iou.mutation.AddPrecoUnitario(f)
+	return iou
+}
+
+// SetPrecoTotal sets the "preco_total" field.
+func (iou *ItemOrdemUpdate) SetPrecoTotal(f float64) *ItemOrdemUpdate {
+	iou.mutation.ResetPrecoTotal()
+	iou.mutation.SetPrecoTotal(f)
+	return iou
+}
+
+// SetNillablePrecoTotal sets the "preco_total" field if the given value is not nil.
+func (iou *ItemOrdemUpdate) SetNillablePrecoTotal(f *float64) *ItemOrdemUpdate {
+	if f != nil {
+		iou.SetPrecoTotal(*f)
+	}
+	return iou
+}
+
+// AddPrecoTotal adds f to the "preco_total" field.
+func (iou *ItemOrdemUpdate) AddPrecoTotal(f float64) *ItemOrdemUpdate {
+	iou.mutation.AddPrecoTotal(f)
 	return iou
 }
 
@@ -109,6 +131,25 @@ func (iou *ItemOrdemUpdate) SetProduto(p *Produto) *ItemOrdemUpdate {
 	return iou.SetProdutoID(p.ID)
 }
 
+// SetEnvioID sets the "envio" edge to the Envio entity by ID.
+func (iou *ItemOrdemUpdate) SetEnvioID(id int) *ItemOrdemUpdate {
+	iou.mutation.SetEnvioID(id)
+	return iou
+}
+
+// SetNillableEnvioID sets the "envio" edge to the Envio entity by ID if the given value is not nil.
+func (iou *ItemOrdemUpdate) SetNillableEnvioID(id *int) *ItemOrdemUpdate {
+	if id != nil {
+		iou = iou.SetEnvioID(*id)
+	}
+	return iou
+}
+
+// SetEnvio sets the "envio" edge to the Envio entity.
+func (iou *ItemOrdemUpdate) SetEnvio(e *Envio) *ItemOrdemUpdate {
+	return iou.SetEnvioID(e.ID)
+}
+
 // Mutation returns the ItemOrdemMutation object of the builder.
 func (iou *ItemOrdemUpdate) Mutation() *ItemOrdemMutation {
 	return iou.mutation
@@ -123,6 +164,12 @@ func (iou *ItemOrdemUpdate) ClearOrdem() *ItemOrdemUpdate {
 // ClearProduto clears the "produto" edge to the Produto entity.
 func (iou *ItemOrdemUpdate) ClearProduto() *ItemOrdemUpdate {
 	iou.mutation.ClearProduto()
+	return iou
+}
+
+// ClearEnvio clears the "envio" edge to the Envio entity.
+func (iou *ItemOrdemUpdate) ClearEnvio() *ItemOrdemUpdate {
+	iou.mutation.ClearEnvio()
 	return iou
 }
 
@@ -182,11 +229,17 @@ func (iou *ItemOrdemUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := iou.mutation.AddedQuantidade(); ok {
 		_spec.AddField(itemordem.FieldQuantidade, field.TypeInt, value)
 	}
-	if value, ok := iou.mutation.Preco(); ok {
-		_spec.SetField(itemordem.FieldPreco, field.TypeFloat64, value)
+	if value, ok := iou.mutation.PrecoUnitario(); ok {
+		_spec.SetField(itemordem.FieldPrecoUnitario, field.TypeFloat64, value)
 	}
-	if value, ok := iou.mutation.AddedPreco(); ok {
-		_spec.AddField(itemordem.FieldPreco, field.TypeFloat64, value)
+	if value, ok := iou.mutation.AddedPrecoUnitario(); ok {
+		_spec.AddField(itemordem.FieldPrecoUnitario, field.TypeFloat64, value)
+	}
+	if value, ok := iou.mutation.PrecoTotal(); ok {
+		_spec.SetField(itemordem.FieldPrecoTotal, field.TypeFloat64, value)
+	}
+	if value, ok := iou.mutation.AddedPrecoTotal(); ok {
+		_spec.AddField(itemordem.FieldPrecoTotal, field.TypeFloat64, value)
 	}
 	if iou.mutation.OrdemCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -246,6 +299,35 @@ func (iou *ItemOrdemUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if iou.mutation.EnvioCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   itemordem.EnvioTable,
+			Columns: []string{itemordem.EnvioColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(envio.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iou.mutation.EnvioIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   itemordem.EnvioTable,
+			Columns: []string{itemordem.EnvioColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(envio.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, iou.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{itemordem.Label}
@@ -287,24 +369,45 @@ func (iouo *ItemOrdemUpdateOne) AddQuantidade(i int) *ItemOrdemUpdateOne {
 	return iouo
 }
 
-// SetPreco sets the "preco" field.
-func (iouo *ItemOrdemUpdateOne) SetPreco(f float64) *ItemOrdemUpdateOne {
-	iouo.mutation.ResetPreco()
-	iouo.mutation.SetPreco(f)
+// SetPrecoUnitario sets the "preco_unitario" field.
+func (iouo *ItemOrdemUpdateOne) SetPrecoUnitario(f float64) *ItemOrdemUpdateOne {
+	iouo.mutation.ResetPrecoUnitario()
+	iouo.mutation.SetPrecoUnitario(f)
 	return iouo
 }
 
-// SetNillablePreco sets the "preco" field if the given value is not nil.
-func (iouo *ItemOrdemUpdateOne) SetNillablePreco(f *float64) *ItemOrdemUpdateOne {
+// SetNillablePrecoUnitario sets the "preco_unitario" field if the given value is not nil.
+func (iouo *ItemOrdemUpdateOne) SetNillablePrecoUnitario(f *float64) *ItemOrdemUpdateOne {
 	if f != nil {
-		iouo.SetPreco(*f)
+		iouo.SetPrecoUnitario(*f)
 	}
 	return iouo
 }
 
-// AddPreco adds f to the "preco" field.
-func (iouo *ItemOrdemUpdateOne) AddPreco(f float64) *ItemOrdemUpdateOne {
-	iouo.mutation.AddPreco(f)
+// AddPrecoUnitario adds f to the "preco_unitario" field.
+func (iouo *ItemOrdemUpdateOne) AddPrecoUnitario(f float64) *ItemOrdemUpdateOne {
+	iouo.mutation.AddPrecoUnitario(f)
+	return iouo
+}
+
+// SetPrecoTotal sets the "preco_total" field.
+func (iouo *ItemOrdemUpdateOne) SetPrecoTotal(f float64) *ItemOrdemUpdateOne {
+	iouo.mutation.ResetPrecoTotal()
+	iouo.mutation.SetPrecoTotal(f)
+	return iouo
+}
+
+// SetNillablePrecoTotal sets the "preco_total" field if the given value is not nil.
+func (iouo *ItemOrdemUpdateOne) SetNillablePrecoTotal(f *float64) *ItemOrdemUpdateOne {
+	if f != nil {
+		iouo.SetPrecoTotal(*f)
+	}
+	return iouo
+}
+
+// AddPrecoTotal adds f to the "preco_total" field.
+func (iouo *ItemOrdemUpdateOne) AddPrecoTotal(f float64) *ItemOrdemUpdateOne {
+	iouo.mutation.AddPrecoTotal(f)
 	return iouo
 }
 
@@ -346,6 +449,25 @@ func (iouo *ItemOrdemUpdateOne) SetProduto(p *Produto) *ItemOrdemUpdateOne {
 	return iouo.SetProdutoID(p.ID)
 }
 
+// SetEnvioID sets the "envio" edge to the Envio entity by ID.
+func (iouo *ItemOrdemUpdateOne) SetEnvioID(id int) *ItemOrdemUpdateOne {
+	iouo.mutation.SetEnvioID(id)
+	return iouo
+}
+
+// SetNillableEnvioID sets the "envio" edge to the Envio entity by ID if the given value is not nil.
+func (iouo *ItemOrdemUpdateOne) SetNillableEnvioID(id *int) *ItemOrdemUpdateOne {
+	if id != nil {
+		iouo = iouo.SetEnvioID(*id)
+	}
+	return iouo
+}
+
+// SetEnvio sets the "envio" edge to the Envio entity.
+func (iouo *ItemOrdemUpdateOne) SetEnvio(e *Envio) *ItemOrdemUpdateOne {
+	return iouo.SetEnvioID(e.ID)
+}
+
 // Mutation returns the ItemOrdemMutation object of the builder.
 func (iouo *ItemOrdemUpdateOne) Mutation() *ItemOrdemMutation {
 	return iouo.mutation
@@ -360,6 +482,12 @@ func (iouo *ItemOrdemUpdateOne) ClearOrdem() *ItemOrdemUpdateOne {
 // ClearProduto clears the "produto" edge to the Produto entity.
 func (iouo *ItemOrdemUpdateOne) ClearProduto() *ItemOrdemUpdateOne {
 	iouo.mutation.ClearProduto()
+	return iouo
+}
+
+// ClearEnvio clears the "envio" edge to the Envio entity.
+func (iouo *ItemOrdemUpdateOne) ClearEnvio() *ItemOrdemUpdateOne {
+	iouo.mutation.ClearEnvio()
 	return iouo
 }
 
@@ -449,11 +577,17 @@ func (iouo *ItemOrdemUpdateOne) sqlSave(ctx context.Context) (_node *ItemOrdem, 
 	if value, ok := iouo.mutation.AddedQuantidade(); ok {
 		_spec.AddField(itemordem.FieldQuantidade, field.TypeInt, value)
 	}
-	if value, ok := iouo.mutation.Preco(); ok {
-		_spec.SetField(itemordem.FieldPreco, field.TypeFloat64, value)
+	if value, ok := iouo.mutation.PrecoUnitario(); ok {
+		_spec.SetField(itemordem.FieldPrecoUnitario, field.TypeFloat64, value)
 	}
-	if value, ok := iouo.mutation.AddedPreco(); ok {
-		_spec.AddField(itemordem.FieldPreco, field.TypeFloat64, value)
+	if value, ok := iouo.mutation.AddedPrecoUnitario(); ok {
+		_spec.AddField(itemordem.FieldPrecoUnitario, field.TypeFloat64, value)
+	}
+	if value, ok := iouo.mutation.PrecoTotal(); ok {
+		_spec.SetField(itemordem.FieldPrecoTotal, field.TypeFloat64, value)
+	}
+	if value, ok := iouo.mutation.AddedPrecoTotal(); ok {
+		_spec.AddField(itemordem.FieldPrecoTotal, field.TypeFloat64, value)
 	}
 	if iouo.mutation.OrdemCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -506,6 +640,35 @@ func (iouo *ItemOrdemUpdateOne) sqlSave(ctx context.Context) (_node *ItemOrdem, 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(produto.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if iouo.mutation.EnvioCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   itemordem.EnvioTable,
+			Columns: []string{itemordem.EnvioColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(envio.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iouo.mutation.EnvioIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   itemordem.EnvioTable,
+			Columns: []string{itemordem.EnvioColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(envio.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

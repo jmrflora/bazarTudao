@@ -24,5 +24,6 @@ func (Produto) Fields() []ent.Field {
 func (Produto) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("ordens", Ordem.Type).Ref("produtos").Through("itens", ItemOrdem.Type),
+		edge.From("stock", Stock.Type).Ref("produtos").Unique(),
 	}
 }

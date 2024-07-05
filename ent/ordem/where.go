@@ -60,6 +60,11 @@ func DataOrdem(v time.Time) predicate.Ordem {
 	return predicate.Ordem(sql.FieldEQ(FieldDataOrdem, v))
 }
 
+// Completa applies equality check predicate on the "completa" field. It's identical to CompletaEQ.
+func Completa(v bool) predicate.Ordem {
+	return predicate.Ordem(sql.FieldEQ(FieldCompleta, v))
+}
+
 // DataOrdemEQ applies the EQ predicate on the "data_ordem" field.
 func DataOrdemEQ(v time.Time) predicate.Ordem {
 	return predicate.Ordem(sql.FieldEQ(FieldDataOrdem, v))
@@ -98,6 +103,16 @@ func DataOrdemLT(v time.Time) predicate.Ordem {
 // DataOrdemLTE applies the LTE predicate on the "data_ordem" field.
 func DataOrdemLTE(v time.Time) predicate.Ordem {
 	return predicate.Ordem(sql.FieldLTE(FieldDataOrdem, v))
+}
+
+// CompletaEQ applies the EQ predicate on the "completa" field.
+func CompletaEQ(v bool) predicate.Ordem {
+	return predicate.Ordem(sql.FieldEQ(FieldCompleta, v))
+}
+
+// CompletaNEQ applies the NEQ predicate on the "completa" field.
+func CompletaNEQ(v bool) predicate.Ordem {
+	return predicate.Ordem(sql.FieldNEQ(FieldCompleta, v))
 }
 
 // HasProdutos applies the HasEdge predicate on the "produtos" edge.

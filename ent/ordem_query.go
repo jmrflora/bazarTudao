@@ -600,6 +600,7 @@ func (oq *OrdemQuery) loadItems(ctx context.Context, query *ItemOrdemQuery, node
 			init(nodes[i])
 		}
 	}
+	query.withFKs = true
 	if len(query.ctx.Fields) > 0 {
 		query.ctx.AppendFieldOnce(itemordem.FieldOrdemID)
 	}

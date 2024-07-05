@@ -2,8 +2,39 @@
 
 package ent
 
+import (
+	"time"
+
+	"github.com/jmrflora/bazarTudao/ent/envio"
+	"github.com/jmrflora/bazarTudao/ent/ordem"
+	"github.com/jmrflora/bazarTudao/ent/schema"
+	"github.com/jmrflora/bazarTudao/ent/stock"
+)
+
 // The init function reads all schema descriptors with runtime code
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	envioFields := schema.Envio{}.Fields()
+	_ = envioFields
+	// envioDescData is the schema descriptor for data field.
+	envioDescData := envioFields[0].Descriptor()
+	// envio.DefaultData holds the default value on creation for the data field.
+	envio.DefaultData = envioDescData.Default.(func() time.Time)
+	ordemFields := schema.Ordem{}.Fields()
+	_ = ordemFields
+	// ordemDescDataOrdem is the schema descriptor for data_ordem field.
+	ordemDescDataOrdem := ordemFields[0].Descriptor()
+	// ordem.DefaultDataOrdem holds the default value on creation for the data_ordem field.
+	ordem.DefaultDataOrdem = ordemDescDataOrdem.Default.(func() time.Time)
+	// ordemDescCompleta is the schema descriptor for completa field.
+	ordemDescCompleta := ordemFields[1].Descriptor()
+	// ordem.DefaultCompleta holds the default value on creation for the completa field.
+	ordem.DefaultCompleta = ordemDescCompleta.Default.(bool)
+	stockFields := schema.Stock{}.Fields()
+	_ = stockFields
+	// stockDescDataMovimento is the schema descriptor for data_movimento field.
+	stockDescDataMovimento := stockFields[0].Descriptor()
+	// stock.DefaultDataMovimento holds the default value on creation for the data_movimento field.
+	stock.DefaultDataMovimento = stockDescDataMovimento.Default.(func() time.Time)
 }

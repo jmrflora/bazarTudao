@@ -58,9 +58,14 @@ func Quantidade(v int) predicate.ItemOrdem {
 	return predicate.ItemOrdem(sql.FieldEQ(FieldQuantidade, v))
 }
 
-// Preco applies equality check predicate on the "preco" field. It's identical to PrecoEQ.
-func Preco(v float64) predicate.ItemOrdem {
-	return predicate.ItemOrdem(sql.FieldEQ(FieldPreco, v))
+// PrecoUnitario applies equality check predicate on the "preco_unitario" field. It's identical to PrecoUnitarioEQ.
+func PrecoUnitario(v float64) predicate.ItemOrdem {
+	return predicate.ItemOrdem(sql.FieldEQ(FieldPrecoUnitario, v))
+}
+
+// PrecoTotal applies equality check predicate on the "preco_total" field. It's identical to PrecoTotalEQ.
+func PrecoTotal(v float64) predicate.ItemOrdem {
+	return predicate.ItemOrdem(sql.FieldEQ(FieldPrecoTotal, v))
 }
 
 // OrdemID applies equality check predicate on the "ordem_id" field. It's identical to OrdemIDEQ.
@@ -113,44 +118,84 @@ func QuantidadeLTE(v int) predicate.ItemOrdem {
 	return predicate.ItemOrdem(sql.FieldLTE(FieldQuantidade, v))
 }
 
-// PrecoEQ applies the EQ predicate on the "preco" field.
-func PrecoEQ(v float64) predicate.ItemOrdem {
-	return predicate.ItemOrdem(sql.FieldEQ(FieldPreco, v))
+// PrecoUnitarioEQ applies the EQ predicate on the "preco_unitario" field.
+func PrecoUnitarioEQ(v float64) predicate.ItemOrdem {
+	return predicate.ItemOrdem(sql.FieldEQ(FieldPrecoUnitario, v))
 }
 
-// PrecoNEQ applies the NEQ predicate on the "preco" field.
-func PrecoNEQ(v float64) predicate.ItemOrdem {
-	return predicate.ItemOrdem(sql.FieldNEQ(FieldPreco, v))
+// PrecoUnitarioNEQ applies the NEQ predicate on the "preco_unitario" field.
+func PrecoUnitarioNEQ(v float64) predicate.ItemOrdem {
+	return predicate.ItemOrdem(sql.FieldNEQ(FieldPrecoUnitario, v))
 }
 
-// PrecoIn applies the In predicate on the "preco" field.
-func PrecoIn(vs ...float64) predicate.ItemOrdem {
-	return predicate.ItemOrdem(sql.FieldIn(FieldPreco, vs...))
+// PrecoUnitarioIn applies the In predicate on the "preco_unitario" field.
+func PrecoUnitarioIn(vs ...float64) predicate.ItemOrdem {
+	return predicate.ItemOrdem(sql.FieldIn(FieldPrecoUnitario, vs...))
 }
 
-// PrecoNotIn applies the NotIn predicate on the "preco" field.
-func PrecoNotIn(vs ...float64) predicate.ItemOrdem {
-	return predicate.ItemOrdem(sql.FieldNotIn(FieldPreco, vs...))
+// PrecoUnitarioNotIn applies the NotIn predicate on the "preco_unitario" field.
+func PrecoUnitarioNotIn(vs ...float64) predicate.ItemOrdem {
+	return predicate.ItemOrdem(sql.FieldNotIn(FieldPrecoUnitario, vs...))
 }
 
-// PrecoGT applies the GT predicate on the "preco" field.
-func PrecoGT(v float64) predicate.ItemOrdem {
-	return predicate.ItemOrdem(sql.FieldGT(FieldPreco, v))
+// PrecoUnitarioGT applies the GT predicate on the "preco_unitario" field.
+func PrecoUnitarioGT(v float64) predicate.ItemOrdem {
+	return predicate.ItemOrdem(sql.FieldGT(FieldPrecoUnitario, v))
 }
 
-// PrecoGTE applies the GTE predicate on the "preco" field.
-func PrecoGTE(v float64) predicate.ItemOrdem {
-	return predicate.ItemOrdem(sql.FieldGTE(FieldPreco, v))
+// PrecoUnitarioGTE applies the GTE predicate on the "preco_unitario" field.
+func PrecoUnitarioGTE(v float64) predicate.ItemOrdem {
+	return predicate.ItemOrdem(sql.FieldGTE(FieldPrecoUnitario, v))
 }
 
-// PrecoLT applies the LT predicate on the "preco" field.
-func PrecoLT(v float64) predicate.ItemOrdem {
-	return predicate.ItemOrdem(sql.FieldLT(FieldPreco, v))
+// PrecoUnitarioLT applies the LT predicate on the "preco_unitario" field.
+func PrecoUnitarioLT(v float64) predicate.ItemOrdem {
+	return predicate.ItemOrdem(sql.FieldLT(FieldPrecoUnitario, v))
 }
 
-// PrecoLTE applies the LTE predicate on the "preco" field.
-func PrecoLTE(v float64) predicate.ItemOrdem {
-	return predicate.ItemOrdem(sql.FieldLTE(FieldPreco, v))
+// PrecoUnitarioLTE applies the LTE predicate on the "preco_unitario" field.
+func PrecoUnitarioLTE(v float64) predicate.ItemOrdem {
+	return predicate.ItemOrdem(sql.FieldLTE(FieldPrecoUnitario, v))
+}
+
+// PrecoTotalEQ applies the EQ predicate on the "preco_total" field.
+func PrecoTotalEQ(v float64) predicate.ItemOrdem {
+	return predicate.ItemOrdem(sql.FieldEQ(FieldPrecoTotal, v))
+}
+
+// PrecoTotalNEQ applies the NEQ predicate on the "preco_total" field.
+func PrecoTotalNEQ(v float64) predicate.ItemOrdem {
+	return predicate.ItemOrdem(sql.FieldNEQ(FieldPrecoTotal, v))
+}
+
+// PrecoTotalIn applies the In predicate on the "preco_total" field.
+func PrecoTotalIn(vs ...float64) predicate.ItemOrdem {
+	return predicate.ItemOrdem(sql.FieldIn(FieldPrecoTotal, vs...))
+}
+
+// PrecoTotalNotIn applies the NotIn predicate on the "preco_total" field.
+func PrecoTotalNotIn(vs ...float64) predicate.ItemOrdem {
+	return predicate.ItemOrdem(sql.FieldNotIn(FieldPrecoTotal, vs...))
+}
+
+// PrecoTotalGT applies the GT predicate on the "preco_total" field.
+func PrecoTotalGT(v float64) predicate.ItemOrdem {
+	return predicate.ItemOrdem(sql.FieldGT(FieldPrecoTotal, v))
+}
+
+// PrecoTotalGTE applies the GTE predicate on the "preco_total" field.
+func PrecoTotalGTE(v float64) predicate.ItemOrdem {
+	return predicate.ItemOrdem(sql.FieldGTE(FieldPrecoTotal, v))
+}
+
+// PrecoTotalLT applies the LT predicate on the "preco_total" field.
+func PrecoTotalLT(v float64) predicate.ItemOrdem {
+	return predicate.ItemOrdem(sql.FieldLT(FieldPrecoTotal, v))
+}
+
+// PrecoTotalLTE applies the LTE predicate on the "preco_total" field.
+func PrecoTotalLTE(v float64) predicate.ItemOrdem {
+	return predicate.ItemOrdem(sql.FieldLTE(FieldPrecoTotal, v))
 }
 
 // OrdemIDEQ applies the EQ predicate on the "ordem_id" field.
@@ -231,6 +276,29 @@ func HasProduto() predicate.ItemOrdem {
 func HasProdutoWith(preds ...predicate.Produto) predicate.ItemOrdem {
 	return predicate.ItemOrdem(func(s *sql.Selector) {
 		step := newProdutoStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasEnvio applies the HasEdge predicate on the "envio" edge.
+func HasEnvio() predicate.ItemOrdem {
+	return predicate.ItemOrdem(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, EnvioTable, EnvioColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasEnvioWith applies the HasEdge predicate on the "envio" edge with a given conditions (other predicates).
+func HasEnvioWith(preds ...predicate.Envio) predicate.ItemOrdem {
+	return predicate.ItemOrdem(func(s *sql.Selector) {
+		step := newEnvioStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

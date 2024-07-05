@@ -3,6 +3,8 @@
 package ordem
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 )
@@ -14,6 +16,8 @@ const (
 	FieldID = "id"
 	// FieldDataOrdem holds the string denoting the data_ordem field in the database.
 	FieldDataOrdem = "data_ordem"
+	// FieldCompleta holds the string denoting the completa field in the database.
+	FieldCompleta = "completa"
 	// EdgeProdutos holds the string denoting the produtos edge name in mutations.
 	EdgeProdutos = "produtos"
 	// EdgeClientes holds the string denoting the clientes edge name in mutations.
@@ -47,6 +51,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldDataOrdem,
+	FieldCompleta,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "ordems"
@@ -76,6 +81,13 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+var (
+	// DefaultDataOrdem holds the default value on creation for the "data_ordem" field.
+	DefaultDataOrdem func() time.Time
+	// DefaultCompleta holds the default value on creation for the "completa" field.
+	DefaultCompleta bool
+)
+
 // OrderOption defines the ordering options for the Ordem queries.
 type OrderOption func(*sql.Selector)
 
@@ -87,6 +99,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByDataOrdem orders the results by the data_ordem field.
 func ByDataOrdem(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDataOrdem, opts...).ToFunc()
+}
+
+// ByCompleta orders the results by the completa field.
+func ByCompleta(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCompleta, opts...).ToFunc()
 }
 
 // ByProdutosCount orders the results by produtos count.
