@@ -78,6 +78,10 @@ func main() {
 
 	e.GET("/clientes", h.HandlerGetAllClientes)
 
+	e.POST("/load", h.LoadPedidos)
+
+	e.POST("/tratar/intocadas", h.TratarPedidosIntocados)
+
 	e.Logger.Fatal(e.Start(":1323"))
 }
 
