@@ -243,3 +243,23 @@ func (h *Handler) TratarPedidosParciais(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, "tudo ok")
 }
+
+func (h *Handler) ComprarOqueFalta(c echo.Context) error {
+	itens, err := h.crud.GetItensNaoEnviados()
+	if err != nil {
+		return err
+	}
+
+	for _, item := range itens {
+
+		fmt.Printf("item: %v\n", item)
+
+		if item.Edges.Produto.QuantNoEstoque < item.Quantidade {
+			err = h.crud.AddCompraEstoque(item.Edges.Produto, (item.Quantidade-item.Edges.Produto.QuantNoEstoque)+1)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return c.JSON(http.StatusOK, "tudo ok")
+}
