@@ -82,6 +82,8 @@ func main() {
 
 	e.POST("/tratar/intocadas", h.TratarPedidosIntocados)
 
+	e.POST("/tratar/parciais", h.TratarPedidosParciais)
+
 	e.Logger.Fatal(e.Start(":1323"))
 }
 

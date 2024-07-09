@@ -209,3 +209,37 @@ func (h *Handler) TratarPedidosIntocados(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, "tudo ok")
 }
+
+func (h *Handler) TratarPedidosParciais(c echo.Context) error {
+	ordens, err := h.crud.GetOrdensParciais()
+	if err != nil {
+		return err
+	}
+	for _, ordem := range ordens {
+		itens, err := h.crud.GetItensNaoEnviadosPorOrdem(ordem)
+		if err != nil {
+			return err
+		}
+		i := 0
+		for _, item := range itens {
+			println("/n")
+			fmt.Printf("item: %v\n", item)
+			quantEstoque := item.Edges.Produto.QuantNoEstoque
+			quantItem := item.Quantidade
+			if quantEstoque >= quantItem {
+				println("quantEstoque >= quantItem")
+				_, err := h.crud.AddEnvio(item)
+				if err != nil {
+					return err
+				}
+				item.Edges.Produto.Update().SetQuantNoEstoque(quantEstoque - quantItem).SaveX(context.Background())
+			} else {
+				i++
+			}
+		}
+		if i == 0 {
+			ordem.Update().SetStatus("completa").SaveX(context.Background())
+		}
+	}
+	return c.JSON(http.StatusOK, "tudo ok")
+}
