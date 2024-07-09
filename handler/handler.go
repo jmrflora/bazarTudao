@@ -263,3 +263,25 @@ func (h *Handler) ComprarOqueFalta(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, "tudo ok")
 }
+
+func (h *Handler) ComprarProduto(c echo.Context) error {
+	idst := c.Param("id")
+	quantst := c.Param("quant")
+
+	id, err := strconv.Atoi(idst)
+	if err != nil {
+		return err
+	}
+
+	quant, err := strconv.Atoi(quantst)
+	if err != nil {
+		return err
+	}
+
+	err = h.crud.AddCompraProdutoPorId(id, quant)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, "tudo ok")
+}

@@ -48,6 +48,8 @@ func main() {
 
 	e.POST("/comprar", h.ComprarOqueFalta)
 
+	e.POST("/comprar/:id/:quant", h.ComprarProduto)
+
 	e.Logger.Fatal(e.Start(":1323"))
 }
 

@@ -156,7 +156,7 @@ func (crud *Crud) GetOrdem(id int) (*ent.Ordem, error) {
 }
 
 func (crud *Crud) GetOrdensIntocadas() ([]*ent.Ordem, error) {
-	ordens, err := crud.c.Ordem.Query().Where(ordem.StatusEQ(ordem.StatusIntocada)).Order(ordem.ByDataOrdem(sql.OrderDesc())).All(context.Background())
+	ordens, err := crud.c.Ordem.Query().Where(ordem.StatusEQ(ordem.StatusIntocada)).Order(ordem.ByDataOrdem(sql.OrderDesc())).WithItems().All(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -219,5 +219,24 @@ func (crud *Crud) AddCompraEstoque(p *ent.Produto, quant int) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (crud *Crud) AddCompraProdutoPorId(id, quant int) error {
+	stock, err := crud.c.Stock.Create().SetProdutosID(id).SetQuantidade(quant).Save(context.Background())
+	if err != nil {
+		return err
+	}
+
+	pr, err := stock.QueryProdutos().Only(context.Background())
+	if err != nil {
+		return err
+	}
+
+	_, err = pr.Update().SetQuantNoEstoque(pr.QuantNoEstoque + quant).Save(context.Background())
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
