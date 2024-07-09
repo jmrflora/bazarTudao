@@ -112,12 +112,12 @@ func LoadPedidos(crud *crud.Crud) error {
 			if err != nil {
 				cliente, err = crud.AddCliente(record[2], record[1], record[4], record[9], record[3])
 				if err != nil {
-					panic(err)
+					return err
 				}
 			}
 			ordem, err = crud.AddOrdem(cliente, id)
 			if err != nil {
-				panic(err)
+				return err
 			}
 		}
 		produto, err := crud.GetProduto(record[5])
@@ -126,24 +126,24 @@ func LoadPedidos(crud *crud.Crud) error {
 			produto, err = crud.AddProduto(record[5], record[6])
 			if err != nil {
 				println(err.Error())
-				panic(err)
+				return err
 			}
 		}
 		println("record[8]")
 		println(record[8])
 		precoU, err := strconv.ParseFloat(record[8], 64)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		quant, err := strconv.Atoi(record[7])
 		if err != nil {
-			panic(err)
+			return err
 		}
 		precoT := precoU * float64(quant)
 
 		item, err := crud.AddItem(produto, ordem, quant, precoU, precoT)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		ordem.Update().SetPrecoDaOrdem(ordem.PrecoDaOrdem + item.PrecoTotal).SaveX(context.Background())
