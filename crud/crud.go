@@ -167,7 +167,7 @@ func (crud *Crud) GetOrdensIntocadas() ([]*ent.Ordem, error) {
 func (crud *Crud) GetOrdensParciais() ([]*ent.Ordem, error) {
 	ordens, err := crud.c.Ordem.
 		Query().Where(ordem.StatusEQ(ordem.StatusParcial)).
-		Order(ordem.ByPrecoDaOrdem(sql.OrderDesc())).All(context.Background())
+		Order(ordem.ByPrecoDaOrdem(sql.OrderDesc())).WithItems().All(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +175,7 @@ func (crud *Crud) GetOrdensParciais() ([]*ent.Ordem, error) {
 }
 
 func (crud *Crud) GetOrdensCompletas() ([]*ent.Ordem, error) {
-	ordens, err := crud.c.Ordem.Query().Where(ordem.StatusEQ(ordem.StatusCompleta)).Order(ordem.ByDataOrdem(sql.OrderDesc())).All(context.Background())
+	ordens, err := crud.c.Ordem.Query().Where(ordem.StatusEQ(ordem.StatusCompleta)).Order(ordem.ByDataOrdem(sql.OrderDesc())).WithItems().All(context.Background())
 	if err != nil {
 		return nil, err
 	}
