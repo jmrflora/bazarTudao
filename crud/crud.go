@@ -52,6 +52,14 @@ func (crud *Crud) GetCliente(email string) (*ent.Cliente, error) {
 	return cliente, nil
 }
 
+func (crud *Crud) GetAllClientes() ([]*ent.Cliente, error) {
+	clientes, err := crud.c.Cliente.Query().All(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return clientes, err
+}
+
 func (crud *Crud) AddOrdem(cliente *ent.Cliente, id int) (*ent.Ordem, error) {
 	create := crud.c.Ordem.Create()
 
@@ -83,6 +91,14 @@ func (crud *Crud) GetProduto(sku string) (*ent.Produto, error) {
 	return produto, nil
 }
 
+func (crud *Crud) GetAllProdutos() ([]*ent.Produto, error) {
+	produtos, err := crud.c.Produto.Query().All(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return produtos, nil
+}
+
 func (crud *Crud) AddItem(p *ent.Produto, ordem *ent.Ordem, quant int, precoUnitario float64, precoTotal float64) (*ent.ItemOrdem, error) {
 	create := crud.c.ItemOrdem.Create()
 	create.SetProduto(p).SetQuantidade(quant).SetPrecoUnitario(precoUnitario).SetPrecoTotal(precoTotal).SetOrdem(ordem)
@@ -97,6 +113,14 @@ func (crud *Crud) AddItem(p *ent.Produto, ordem *ent.Ordem, quant int, precoUnit
 
 func (crud *Crud) GetItens(ordem *ent.Ordem) ([]*ent.ItemOrdem, error) {
 	itens, err := ordem.QueryItems().WithProduto().All(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return itens, nil
+}
+
+func (crud *Crud) GetItensPorIdOrdem(id int) ([]*ent.ItemOrdem, error) {
+	itens, err := crud.c.ItemOrdem.Query().WithProduto().Where(itemordem.OrdemID(id)).All(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -150,6 +174,23 @@ func (crud *Crud) GetOrdensParciais() ([]*ent.Ordem, error) {
 	return ordens, nil
 }
 
+func (crud *Crud) GetOrdensCompletas() ([]*ent.Ordem, error) {
+	ordens, err := crud.c.Ordem.Query().Where(ordem.StatusEQ(ordem.StatusCompleta)).Order(ordem.ByDataOrdem(sql.OrderDesc())).All(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	return ordens, nil
+}
+
+func (crud *Crud) GetAllOrdens() ([]*ent.Ordem, error) {
+	ordens, err := crud.c.Ordem.Query().All(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return ordens, nil
+}
+
 func (crud *Crud) AddEnvio(i ...*ent.ItemOrdem) (*ent.Envio, error) {
 	create := crud.c.Envio.Create()
 	create.AddItens(i...)
@@ -158,6 +199,14 @@ func (crud *Crud) AddEnvio(i ...*ent.ItemOrdem) (*ent.Envio, error) {
 		return nil, err
 	}
 	return envio, nil
+}
+
+func (crud *Crud) GetAllEnvios() ([]*ent.Envio, error) {
+	envios, err := crud.c.Envio.Query().WithItens().All(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return envios, nil
 }
 
 func (crud *Crud) AddCompraEstoque(p *ent.Produto, quant int) error {

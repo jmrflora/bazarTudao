@@ -10,6 +10,8 @@ import (
 
 	"github.com/jmrflora/bazarTudao/crud"
 	"github.com/jmrflora/bazarTudao/ent"
+	"github.com/jmrflora/bazarTudao/handler"
+	"github.com/labstack/echo/v4"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -52,10 +54,31 @@ func main() {
 	// 	panic(err)
 	// }
 
-	err = TratarPedidosParciais(*crud)
-	if err != nil {
-		panic(err)
-	}
+	// err = TratarPedidosParciais(*crud)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	h := handler.NewHandler(crud)
+	e := echo.New()
+
+	e.GET("/ordens", h.HandleGetOrdens)
+
+	e.GET("/ordens/completas", h.HandleGetOrdensCompletas)
+
+	e.GET("/ordens/intocadas", h.HandleGetOrdensIntocadas)
+
+	e.GET("/ordens/parciais", h.HandleGetOrdensParciais)
+
+	e.GET("/envios", h.HandleGetEnvios)
+
+	e.GET("/itens/:id", h.HandleGetItensPorIdOrdem)
+
+	e.GET("/produtos", h.HandleGetProdutos)
+
+	e.GET("/clientes", h.HandlerGetAllClientes)
+
+	e.Logger.Fatal(e.Start(":1323"))
 }
 
 func LoadPedidos(crud *crud.Crud) error {
