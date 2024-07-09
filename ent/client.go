@@ -848,15 +848,15 @@ func (c *OrdemClient) QueryProdutos(o *Ordem) *ProdutoQuery {
 	return query
 }
 
-// QueryClientes queries the clientes edge of a Ordem.
-func (c *OrdemClient) QueryClientes(o *Ordem) *ClienteQuery {
+// QueryCliente queries the cliente edge of a Ordem.
+func (c *OrdemClient) QueryCliente(o *Ordem) *ClienteQuery {
 	query := (&ClienteClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := o.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(ordem.Table, ordem.FieldID, id),
 			sqlgraph.To(cliente.Table, cliente.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, ordem.ClientesTable, ordem.ClientesColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, ordem.ClienteTable, ordem.ClienteColumn),
 		)
 		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
 		return fromV, nil
@@ -1037,7 +1037,7 @@ func (c *ProdutoClient) QueryStock(pr *Produto) *StockQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(produto.Table, produto.FieldID, id),
 			sqlgraph.To(stock.Table, stock.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, produto.StockTable, produto.StockColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, produto.StockTable, produto.StockColumn),
 		)
 		fromV = sqlgraph.Neighbors(pr.driver.Dialect(), step)
 		return fromV, nil
@@ -1202,7 +1202,7 @@ func (c *StockClient) QueryProdutos(s *Stock) *ProdutoQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(stock.Table, stock.FieldID, id),
 			sqlgraph.To(produto.Table, produto.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, stock.ProdutosTable, stock.ProdutosColumn),
+			sqlgraph.Edge(sqlgraph.M2O, false, stock.ProdutosTable, stock.ProdutosColumn),
 		)
 		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
 		return fromV, nil

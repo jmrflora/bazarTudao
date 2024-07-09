@@ -9,7 +9,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/jmrflora/bazarTudao/ent/produto"
-	"github.com/jmrflora/bazarTudao/ent/stock"
 )
 
 // Produto is the model entity for the Produto schema.
@@ -25,9 +24,8 @@ type Produto struct {
 	QuantNoEstoque int `json:"quant_no_estoque,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ProdutoQuery when eager-loading is set.
-	Edges          ProdutoEdges `json:"edges"`
-	stock_produtos *int
-	selectValues   sql.SelectValues
+	Edges        ProdutoEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // ProdutoEdges holds the relations/edges for other nodes in the graph.
@@ -35,7 +33,7 @@ type ProdutoEdges struct {
 	// Ordens holds the value of the ordens edge.
 	Ordens []*Ordem `json:"ordens,omitempty"`
 	// Stock holds the value of the stock edge.
-	Stock *Stock `json:"stock,omitempty"`
+	Stock []*Stock `json:"stock,omitempty"`
 	// Itens holds the value of the itens edge.
 	Itens []*ItemOrdem `json:"itens,omitempty"`
 	// loadedTypes holds the information for reporting if a
@@ -53,12 +51,10 @@ func (e ProdutoEdges) OrdensOrErr() ([]*Ordem, error) {
 }
 
 // StockOrErr returns the Stock value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e ProdutoEdges) StockOrErr() (*Stock, error) {
-	if e.Stock != nil {
+// was not loaded in eager-loading.
+func (e ProdutoEdges) StockOrErr() ([]*Stock, error) {
+	if e.loadedTypes[1] {
 		return e.Stock, nil
-	} else if e.loadedTypes[1] {
-		return nil, &NotFoundError{label: stock.Label}
 	}
 	return nil, &NotLoadedError{edge: "stock"}
 }
@@ -81,8 +77,6 @@ func (*Produto) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case produto.FieldSku, produto.FieldNome:
 			values[i] = new(sql.NullString)
-		case produto.ForeignKeys[0]: // stock_produtos
-			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -121,13 +115,6 @@ func (pr *Produto) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field quant_no_estoque", values[i])
 			} else if value.Valid {
 				pr.QuantNoEstoque = int(value.Int64)
-			}
-		case produto.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field stock_produtos", value)
-			} else if value.Valid {
-				pr.stock_produtos = new(int)
-				*pr.stock_produtos = int(value.Int64)
 			}
 		default:
 			pr.selectValues.Set(columns[i], values[i])

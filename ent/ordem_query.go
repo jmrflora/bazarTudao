@@ -26,7 +26,7 @@ type OrdemQuery struct {
 	inters       []Interceptor
 	predicates   []predicate.Ordem
 	withProdutos *ProdutoQuery
-	withClientes *ClienteQuery
+	withCliente  *ClienteQuery
 	withItems    *ItemOrdemQuery
 	withFKs      bool
 	// intermediate query (i.e. traversal path).
@@ -87,8 +87,8 @@ func (oq *OrdemQuery) QueryProdutos() *ProdutoQuery {
 	return query
 }
 
-// QueryClientes chains the current query on the "clientes" edge.
-func (oq *OrdemQuery) QueryClientes() *ClienteQuery {
+// QueryCliente chains the current query on the "cliente" edge.
+func (oq *OrdemQuery) QueryCliente() *ClienteQuery {
 	query := (&ClienteClient{config: oq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := oq.prepareQuery(ctx); err != nil {
@@ -101,7 +101,7 @@ func (oq *OrdemQuery) QueryClientes() *ClienteQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(ordem.Table, ordem.FieldID, selector),
 			sqlgraph.To(cliente.Table, cliente.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, ordem.ClientesTable, ordem.ClientesColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, ordem.ClienteTable, ordem.ClienteColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
 		return fromU, nil
@@ -324,7 +324,7 @@ func (oq *OrdemQuery) Clone() *OrdemQuery {
 		inters:       append([]Interceptor{}, oq.inters...),
 		predicates:   append([]predicate.Ordem{}, oq.predicates...),
 		withProdutos: oq.withProdutos.Clone(),
-		withClientes: oq.withClientes.Clone(),
+		withCliente:  oq.withCliente.Clone(),
 		withItems:    oq.withItems.Clone(),
 		// clone intermediate query.
 		sql:  oq.sql.Clone(),
@@ -343,14 +343,14 @@ func (oq *OrdemQuery) WithProdutos(opts ...func(*ProdutoQuery)) *OrdemQuery {
 	return oq
 }
 
-// WithClientes tells the query-builder to eager-load the nodes that are connected to
-// the "clientes" edge. The optional arguments are used to configure the query builder of the edge.
-func (oq *OrdemQuery) WithClientes(opts ...func(*ClienteQuery)) *OrdemQuery {
+// WithCliente tells the query-builder to eager-load the nodes that are connected to
+// the "cliente" edge. The optional arguments are used to configure the query builder of the edge.
+func (oq *OrdemQuery) WithCliente(opts ...func(*ClienteQuery)) *OrdemQuery {
 	query := (&ClienteClient{config: oq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	oq.withClientes = query
+	oq.withCliente = query
 	return oq
 }
 
@@ -446,11 +446,11 @@ func (oq *OrdemQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Ordem,
 		_spec       = oq.querySpec()
 		loadedTypes = [3]bool{
 			oq.withProdutos != nil,
-			oq.withClientes != nil,
+			oq.withCliente != nil,
 			oq.withItems != nil,
 		}
 	)
-	if oq.withClientes != nil {
+	if oq.withCliente != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -481,9 +481,9 @@ func (oq *OrdemQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Ordem,
 			return nil, err
 		}
 	}
-	if query := oq.withClientes; query != nil {
-		if err := oq.loadClientes(ctx, query, nodes, nil,
-			func(n *Ordem, e *Cliente) { n.Edges.Clientes = e }); err != nil {
+	if query := oq.withCliente; query != nil {
+		if err := oq.loadCliente(ctx, query, nodes, nil,
+			func(n *Ordem, e *Cliente) { n.Edges.Cliente = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -558,7 +558,7 @@ func (oq *OrdemQuery) loadProdutos(ctx context.Context, query *ProdutoQuery, nod
 	}
 	return nil
 }
-func (oq *OrdemQuery) loadClientes(ctx context.Context, query *ClienteQuery, nodes []*Ordem, init func(*Ordem), assign func(*Ordem, *Cliente)) error {
+func (oq *OrdemQuery) loadCliente(ctx context.Context, query *ClienteQuery, nodes []*Ordem, init func(*Ordem), assign func(*Ordem, *Cliente)) error {
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*Ordem)
 	for i := range nodes {

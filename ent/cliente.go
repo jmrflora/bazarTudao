@@ -24,6 +24,8 @@ type Cliente struct {
 	Cpf string `json:"cpf,omitempty"`
 	// Telefone holds the value of the "telefone" field.
 	Telefone string `json:"telefone,omitempty"`
+	// EnderecoEntrega holds the value of the "endereco_entrega" field.
+	EnderecoEntrega string `json:"endereco_entrega,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ClienteQuery when eager-loading is set.
 	Edges        ClienteEdges `json:"edges"`
@@ -55,7 +57,7 @@ func (*Cliente) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case cliente.FieldID:
 			values[i] = new(sql.NullInt64)
-		case cliente.FieldEmail, cliente.FieldNome, cliente.FieldCpf, cliente.FieldTelefone:
+		case cliente.FieldEmail, cliente.FieldNome, cliente.FieldCpf, cliente.FieldTelefone, cliente.FieldEnderecoEntrega:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -101,6 +103,12 @@ func (c *Cliente) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field telefone", values[i])
 			} else if value.Valid {
 				c.Telefone = value.String
+			}
+		case cliente.FieldEnderecoEntrega:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field endereco_entrega", values[i])
+			} else if value.Valid {
+				c.EnderecoEntrega = value.String
 			}
 		default:
 			c.selectValues.Set(columns[i], values[i])
@@ -154,6 +162,9 @@ func (c *Cliente) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("telefone=")
 	builder.WriteString(c.Telefone)
+	builder.WriteString(", ")
+	builder.WriteString("endereco_entrega=")
+	builder.WriteString(c.EnderecoEntrega)
 	builder.WriteByte(')')
 	return builder.String()
 }

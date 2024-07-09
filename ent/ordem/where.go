@@ -60,9 +60,9 @@ func DataOrdem(v time.Time) predicate.Ordem {
 	return predicate.Ordem(sql.FieldEQ(FieldDataOrdem, v))
 }
 
-// Completa applies equality check predicate on the "completa" field. It's identical to CompletaEQ.
-func Completa(v bool) predicate.Ordem {
-	return predicate.Ordem(sql.FieldEQ(FieldCompleta, v))
+// PrecoDaOrdem applies equality check predicate on the "preco_da_ordem" field. It's identical to PrecoDaOrdemEQ.
+func PrecoDaOrdem(v float64) predicate.Ordem {
+	return predicate.Ordem(sql.FieldEQ(FieldPrecoDaOrdem, v))
 }
 
 // DataOrdemEQ applies the EQ predicate on the "data_ordem" field.
@@ -105,14 +105,64 @@ func DataOrdemLTE(v time.Time) predicate.Ordem {
 	return predicate.Ordem(sql.FieldLTE(FieldDataOrdem, v))
 }
 
-// CompletaEQ applies the EQ predicate on the "completa" field.
-func CompletaEQ(v bool) predicate.Ordem {
-	return predicate.Ordem(sql.FieldEQ(FieldCompleta, v))
+// StatusEQ applies the EQ predicate on the "status" field.
+func StatusEQ(v Status) predicate.Ordem {
+	return predicate.Ordem(sql.FieldEQ(FieldStatus, v))
 }
 
-// CompletaNEQ applies the NEQ predicate on the "completa" field.
-func CompletaNEQ(v bool) predicate.Ordem {
-	return predicate.Ordem(sql.FieldNEQ(FieldCompleta, v))
+// StatusNEQ applies the NEQ predicate on the "status" field.
+func StatusNEQ(v Status) predicate.Ordem {
+	return predicate.Ordem(sql.FieldNEQ(FieldStatus, v))
+}
+
+// StatusIn applies the In predicate on the "status" field.
+func StatusIn(vs ...Status) predicate.Ordem {
+	return predicate.Ordem(sql.FieldIn(FieldStatus, vs...))
+}
+
+// StatusNotIn applies the NotIn predicate on the "status" field.
+func StatusNotIn(vs ...Status) predicate.Ordem {
+	return predicate.Ordem(sql.FieldNotIn(FieldStatus, vs...))
+}
+
+// PrecoDaOrdemEQ applies the EQ predicate on the "preco_da_ordem" field.
+func PrecoDaOrdemEQ(v float64) predicate.Ordem {
+	return predicate.Ordem(sql.FieldEQ(FieldPrecoDaOrdem, v))
+}
+
+// PrecoDaOrdemNEQ applies the NEQ predicate on the "preco_da_ordem" field.
+func PrecoDaOrdemNEQ(v float64) predicate.Ordem {
+	return predicate.Ordem(sql.FieldNEQ(FieldPrecoDaOrdem, v))
+}
+
+// PrecoDaOrdemIn applies the In predicate on the "preco_da_ordem" field.
+func PrecoDaOrdemIn(vs ...float64) predicate.Ordem {
+	return predicate.Ordem(sql.FieldIn(FieldPrecoDaOrdem, vs...))
+}
+
+// PrecoDaOrdemNotIn applies the NotIn predicate on the "preco_da_ordem" field.
+func PrecoDaOrdemNotIn(vs ...float64) predicate.Ordem {
+	return predicate.Ordem(sql.FieldNotIn(FieldPrecoDaOrdem, vs...))
+}
+
+// PrecoDaOrdemGT applies the GT predicate on the "preco_da_ordem" field.
+func PrecoDaOrdemGT(v float64) predicate.Ordem {
+	return predicate.Ordem(sql.FieldGT(FieldPrecoDaOrdem, v))
+}
+
+// PrecoDaOrdemGTE applies the GTE predicate on the "preco_da_ordem" field.
+func PrecoDaOrdemGTE(v float64) predicate.Ordem {
+	return predicate.Ordem(sql.FieldGTE(FieldPrecoDaOrdem, v))
+}
+
+// PrecoDaOrdemLT applies the LT predicate on the "preco_da_ordem" field.
+func PrecoDaOrdemLT(v float64) predicate.Ordem {
+	return predicate.Ordem(sql.FieldLT(FieldPrecoDaOrdem, v))
+}
+
+// PrecoDaOrdemLTE applies the LTE predicate on the "preco_da_ordem" field.
+func PrecoDaOrdemLTE(v float64) predicate.Ordem {
+	return predicate.Ordem(sql.FieldLTE(FieldPrecoDaOrdem, v))
 }
 
 // HasProdutos applies the HasEdge predicate on the "produtos" edge.
@@ -138,21 +188,21 @@ func HasProdutosWith(preds ...predicate.Produto) predicate.Ordem {
 	})
 }
 
-// HasClientes applies the HasEdge predicate on the "clientes" edge.
-func HasClientes() predicate.Ordem {
+// HasCliente applies the HasEdge predicate on the "cliente" edge.
+func HasCliente() predicate.Ordem {
 	return predicate.Ordem(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, ClientesTable, ClientesColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, ClienteTable, ClienteColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasClientesWith applies the HasEdge predicate on the "clientes" edge with a given conditions (other predicates).
-func HasClientesWith(preds ...predicate.Cliente) predicate.Ordem {
+// HasClienteWith applies the HasEdge predicate on the "cliente" edge with a given conditions (other predicates).
+func HasClienteWith(preds ...predicate.Cliente) predicate.Ordem {
 	return predicate.Ordem(func(s *sql.Selector) {
-		step := newClientesStep()
+		step := newClienteStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -41,19 +41,23 @@ func (sc *StockCreate) SetQuantidade(i int) *StockCreate {
 	return sc
 }
 
-// AddProdutoIDs adds the "produtos" edge to the Produto entity by IDs.
-func (sc *StockCreate) AddProdutoIDs(ids ...int) *StockCreate {
-	sc.mutation.AddProdutoIDs(ids...)
+// SetProdutosID sets the "produtos" edge to the Produto entity by ID.
+func (sc *StockCreate) SetProdutosID(id int) *StockCreate {
+	sc.mutation.SetProdutosID(id)
 	return sc
 }
 
-// AddProdutos adds the "produtos" edges to the Produto entity.
-func (sc *StockCreate) AddProdutos(p ...*Produto) *StockCreate {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
+// SetNillableProdutosID sets the "produtos" edge to the Produto entity by ID if the given value is not nil.
+func (sc *StockCreate) SetNillableProdutosID(id *int) *StockCreate {
+	if id != nil {
+		sc = sc.SetProdutosID(*id)
 	}
-	return sc.AddProdutoIDs(ids...)
+	return sc
+}
+
+// SetProdutos sets the "produtos" edge to the Produto entity.
+func (sc *StockCreate) SetProdutos(p *Produto) *StockCreate {
+	return sc.SetProdutosID(p.ID)
 }
 
 // Mutation returns the StockMutation object of the builder.
@@ -141,7 +145,7 @@ func (sc *StockCreate) createSpec() (*Stock, *sqlgraph.CreateSpec) {
 	}
 	if nodes := sc.mutation.ProdutosIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: false,
 			Table:   stock.ProdutosTable,
 			Columns: []string{stock.ProdutosColumn},
@@ -153,6 +157,7 @@ func (sc *StockCreate) createSpec() (*Stock, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.stock_produtos = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

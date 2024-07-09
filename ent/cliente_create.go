@@ -44,6 +44,12 @@ func (cc *ClienteCreate) SetTelefone(s string) *ClienteCreate {
 	return cc
 }
 
+// SetEnderecoEntrega sets the "endereco_entrega" field.
+func (cc *ClienteCreate) SetEnderecoEntrega(s string) *ClienteCreate {
+	cc.mutation.SetEnderecoEntrega(s)
+	return cc
+}
+
 // AddOrdenIDs adds the "ordens" edge to the Ordem entity by IDs.
 func (cc *ClienteCreate) AddOrdenIDs(ids ...int) *ClienteCreate {
 	cc.mutation.AddOrdenIDs(ids...)
@@ -105,6 +111,9 @@ func (cc *ClienteCreate) check() error {
 	if _, ok := cc.mutation.Telefone(); !ok {
 		return &ValidationError{Name: "telefone", err: errors.New(`ent: missing required field "Cliente.telefone"`)}
 	}
+	if _, ok := cc.mutation.EnderecoEntrega(); !ok {
+		return &ValidationError{Name: "endereco_entrega", err: errors.New(`ent: missing required field "Cliente.endereco_entrega"`)}
+	}
 	return nil
 }
 
@@ -146,6 +155,10 @@ func (cc *ClienteCreate) createSpec() (*Cliente, *sqlgraph.CreateSpec) {
 	if value, ok := cc.mutation.Telefone(); ok {
 		_spec.SetField(cliente.FieldTelefone, field.TypeString, value)
 		_node.Telefone = value
+	}
+	if value, ok := cc.mutation.EnderecoEntrega(); ok {
+		_spec.SetField(cliente.FieldEnderecoEntrega, field.TypeString, value)
+		_node.EnderecoEntrega = value
 	}
 	if nodes := cc.mutation.OrdensIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

@@ -45,17 +45,38 @@ func (ou *OrdemUpdate) SetNillableDataOrdem(t *time.Time) *OrdemUpdate {
 	return ou
 }
 
-// SetCompleta sets the "completa" field.
-func (ou *OrdemUpdate) SetCompleta(b bool) *OrdemUpdate {
-	ou.mutation.SetCompleta(b)
+// SetStatus sets the "status" field.
+func (ou *OrdemUpdate) SetStatus(o ordem.Status) *OrdemUpdate {
+	ou.mutation.SetStatus(o)
 	return ou
 }
 
-// SetNillableCompleta sets the "completa" field if the given value is not nil.
-func (ou *OrdemUpdate) SetNillableCompleta(b *bool) *OrdemUpdate {
-	if b != nil {
-		ou.SetCompleta(*b)
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (ou *OrdemUpdate) SetNillableStatus(o *ordem.Status) *OrdemUpdate {
+	if o != nil {
+		ou.SetStatus(*o)
 	}
+	return ou
+}
+
+// SetPrecoDaOrdem sets the "preco_da_ordem" field.
+func (ou *OrdemUpdate) SetPrecoDaOrdem(f float64) *OrdemUpdate {
+	ou.mutation.ResetPrecoDaOrdem()
+	ou.mutation.SetPrecoDaOrdem(f)
+	return ou
+}
+
+// SetNillablePrecoDaOrdem sets the "preco_da_ordem" field if the given value is not nil.
+func (ou *OrdemUpdate) SetNillablePrecoDaOrdem(f *float64) *OrdemUpdate {
+	if f != nil {
+		ou.SetPrecoDaOrdem(*f)
+	}
+	return ou
+}
+
+// AddPrecoDaOrdem adds f to the "preco_da_ordem" field.
+func (ou *OrdemUpdate) AddPrecoDaOrdem(f float64) *OrdemUpdate {
+	ou.mutation.AddPrecoDaOrdem(f)
 	return ou
 }
 
@@ -74,23 +95,23 @@ func (ou *OrdemUpdate) AddProdutos(p ...*Produto) *OrdemUpdate {
 	return ou.AddProdutoIDs(ids...)
 }
 
-// SetClientesID sets the "clientes" edge to the Cliente entity by ID.
-func (ou *OrdemUpdate) SetClientesID(id int) *OrdemUpdate {
-	ou.mutation.SetClientesID(id)
+// SetClienteID sets the "cliente" edge to the Cliente entity by ID.
+func (ou *OrdemUpdate) SetClienteID(id int) *OrdemUpdate {
+	ou.mutation.SetClienteID(id)
 	return ou
 }
 
-// SetNillableClientesID sets the "clientes" edge to the Cliente entity by ID if the given value is not nil.
-func (ou *OrdemUpdate) SetNillableClientesID(id *int) *OrdemUpdate {
+// SetNillableClienteID sets the "cliente" edge to the Cliente entity by ID if the given value is not nil.
+func (ou *OrdemUpdate) SetNillableClienteID(id *int) *OrdemUpdate {
 	if id != nil {
-		ou = ou.SetClientesID(*id)
+		ou = ou.SetClienteID(*id)
 	}
 	return ou
 }
 
-// SetClientes sets the "clientes" edge to the Cliente entity.
-func (ou *OrdemUpdate) SetClientes(c *Cliente) *OrdemUpdate {
-	return ou.SetClientesID(c.ID)
+// SetCliente sets the "cliente" edge to the Cliente entity.
+func (ou *OrdemUpdate) SetCliente(c *Cliente) *OrdemUpdate {
+	return ou.SetClienteID(c.ID)
 }
 
 // AddItemIDs adds the "items" edge to the ItemOrdem entity by IDs.
@@ -134,9 +155,9 @@ func (ou *OrdemUpdate) RemoveProdutos(p ...*Produto) *OrdemUpdate {
 	return ou.RemoveProdutoIDs(ids...)
 }
 
-// ClearClientes clears the "clientes" edge to the Cliente entity.
-func (ou *OrdemUpdate) ClearClientes() *OrdemUpdate {
-	ou.mutation.ClearClientes()
+// ClearCliente clears the "cliente" edge to the Cliente entity.
+func (ou *OrdemUpdate) ClearCliente() *OrdemUpdate {
+	ou.mutation.ClearCliente()
 	return ou
 }
 
@@ -188,7 +209,20 @@ func (ou *OrdemUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (ou *OrdemUpdate) check() error {
+	if v, ok := ou.mutation.Status(); ok {
+		if err := ordem.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Ordem.status": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (ou *OrdemUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := ou.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(ordem.Table, ordem.Columns, sqlgraph.NewFieldSpec(ordem.FieldID, field.TypeInt))
 	if ps := ou.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -200,8 +234,14 @@ func (ou *OrdemUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := ou.mutation.DataOrdem(); ok {
 		_spec.SetField(ordem.FieldDataOrdem, field.TypeTime, value)
 	}
-	if value, ok := ou.mutation.Completa(); ok {
-		_spec.SetField(ordem.FieldCompleta, field.TypeBool, value)
+	if value, ok := ou.mutation.Status(); ok {
+		_spec.SetField(ordem.FieldStatus, field.TypeEnum, value)
+	}
+	if value, ok := ou.mutation.PrecoDaOrdem(); ok {
+		_spec.SetField(ordem.FieldPrecoDaOrdem, field.TypeFloat64, value)
+	}
+	if value, ok := ou.mutation.AddedPrecoDaOrdem(); ok {
+		_spec.AddField(ordem.FieldPrecoDaOrdem, field.TypeFloat64, value)
 	}
 	if ou.mutation.ProdutosCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -248,12 +288,12 @@ func (ou *OrdemUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if ou.mutation.ClientesCleared() {
+	if ou.mutation.ClienteCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   ordem.ClientesTable,
-			Columns: []string{ordem.ClientesColumn},
+			Table:   ordem.ClienteTable,
+			Columns: []string{ordem.ClienteColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(cliente.FieldID, field.TypeInt),
@@ -261,12 +301,12 @@ func (ou *OrdemUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := ou.mutation.ClientesIDs(); len(nodes) > 0 {
+	if nodes := ou.mutation.ClienteIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   ordem.ClientesTable,
-			Columns: []string{ordem.ClientesColumn},
+			Table:   ordem.ClienteTable,
+			Columns: []string{ordem.ClienteColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(cliente.FieldID, field.TypeInt),
@@ -356,17 +396,38 @@ func (ouo *OrdemUpdateOne) SetNillableDataOrdem(t *time.Time) *OrdemUpdateOne {
 	return ouo
 }
 
-// SetCompleta sets the "completa" field.
-func (ouo *OrdemUpdateOne) SetCompleta(b bool) *OrdemUpdateOne {
-	ouo.mutation.SetCompleta(b)
+// SetStatus sets the "status" field.
+func (ouo *OrdemUpdateOne) SetStatus(o ordem.Status) *OrdemUpdateOne {
+	ouo.mutation.SetStatus(o)
 	return ouo
 }
 
-// SetNillableCompleta sets the "completa" field if the given value is not nil.
-func (ouo *OrdemUpdateOne) SetNillableCompleta(b *bool) *OrdemUpdateOne {
-	if b != nil {
-		ouo.SetCompleta(*b)
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (ouo *OrdemUpdateOne) SetNillableStatus(o *ordem.Status) *OrdemUpdateOne {
+	if o != nil {
+		ouo.SetStatus(*o)
 	}
+	return ouo
+}
+
+// SetPrecoDaOrdem sets the "preco_da_ordem" field.
+func (ouo *OrdemUpdateOne) SetPrecoDaOrdem(f float64) *OrdemUpdateOne {
+	ouo.mutation.ResetPrecoDaOrdem()
+	ouo.mutation.SetPrecoDaOrdem(f)
+	return ouo
+}
+
+// SetNillablePrecoDaOrdem sets the "preco_da_ordem" field if the given value is not nil.
+func (ouo *OrdemUpdateOne) SetNillablePrecoDaOrdem(f *float64) *OrdemUpdateOne {
+	if f != nil {
+		ouo.SetPrecoDaOrdem(*f)
+	}
+	return ouo
+}
+
+// AddPrecoDaOrdem adds f to the "preco_da_ordem" field.
+func (ouo *OrdemUpdateOne) AddPrecoDaOrdem(f float64) *OrdemUpdateOne {
+	ouo.mutation.AddPrecoDaOrdem(f)
 	return ouo
 }
 
@@ -385,23 +446,23 @@ func (ouo *OrdemUpdateOne) AddProdutos(p ...*Produto) *OrdemUpdateOne {
 	return ouo.AddProdutoIDs(ids...)
 }
 
-// SetClientesID sets the "clientes" edge to the Cliente entity by ID.
-func (ouo *OrdemUpdateOne) SetClientesID(id int) *OrdemUpdateOne {
-	ouo.mutation.SetClientesID(id)
+// SetClienteID sets the "cliente" edge to the Cliente entity by ID.
+func (ouo *OrdemUpdateOne) SetClienteID(id int) *OrdemUpdateOne {
+	ouo.mutation.SetClienteID(id)
 	return ouo
 }
 
-// SetNillableClientesID sets the "clientes" edge to the Cliente entity by ID if the given value is not nil.
-func (ouo *OrdemUpdateOne) SetNillableClientesID(id *int) *OrdemUpdateOne {
+// SetNillableClienteID sets the "cliente" edge to the Cliente entity by ID if the given value is not nil.
+func (ouo *OrdemUpdateOne) SetNillableClienteID(id *int) *OrdemUpdateOne {
 	if id != nil {
-		ouo = ouo.SetClientesID(*id)
+		ouo = ouo.SetClienteID(*id)
 	}
 	return ouo
 }
 
-// SetClientes sets the "clientes" edge to the Cliente entity.
-func (ouo *OrdemUpdateOne) SetClientes(c *Cliente) *OrdemUpdateOne {
-	return ouo.SetClientesID(c.ID)
+// SetCliente sets the "cliente" edge to the Cliente entity.
+func (ouo *OrdemUpdateOne) SetCliente(c *Cliente) *OrdemUpdateOne {
+	return ouo.SetClienteID(c.ID)
 }
 
 // AddItemIDs adds the "items" edge to the ItemOrdem entity by IDs.
@@ -445,9 +506,9 @@ func (ouo *OrdemUpdateOne) RemoveProdutos(p ...*Produto) *OrdemUpdateOne {
 	return ouo.RemoveProdutoIDs(ids...)
 }
 
-// ClearClientes clears the "clientes" edge to the Cliente entity.
-func (ouo *OrdemUpdateOne) ClearClientes() *OrdemUpdateOne {
-	ouo.mutation.ClearClientes()
+// ClearCliente clears the "cliente" edge to the Cliente entity.
+func (ouo *OrdemUpdateOne) ClearCliente() *OrdemUpdateOne {
+	ouo.mutation.ClearCliente()
 	return ouo
 }
 
@@ -512,7 +573,20 @@ func (ouo *OrdemUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (ouo *OrdemUpdateOne) check() error {
+	if v, ok := ouo.mutation.Status(); ok {
+		if err := ordem.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Ordem.status": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (ouo *OrdemUpdateOne) sqlSave(ctx context.Context) (_node *Ordem, err error) {
+	if err := ouo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(ordem.Table, ordem.Columns, sqlgraph.NewFieldSpec(ordem.FieldID, field.TypeInt))
 	id, ok := ouo.mutation.ID()
 	if !ok {
@@ -541,8 +615,14 @@ func (ouo *OrdemUpdateOne) sqlSave(ctx context.Context) (_node *Ordem, err error
 	if value, ok := ouo.mutation.DataOrdem(); ok {
 		_spec.SetField(ordem.FieldDataOrdem, field.TypeTime, value)
 	}
-	if value, ok := ouo.mutation.Completa(); ok {
-		_spec.SetField(ordem.FieldCompleta, field.TypeBool, value)
+	if value, ok := ouo.mutation.Status(); ok {
+		_spec.SetField(ordem.FieldStatus, field.TypeEnum, value)
+	}
+	if value, ok := ouo.mutation.PrecoDaOrdem(); ok {
+		_spec.SetField(ordem.FieldPrecoDaOrdem, field.TypeFloat64, value)
+	}
+	if value, ok := ouo.mutation.AddedPrecoDaOrdem(); ok {
+		_spec.AddField(ordem.FieldPrecoDaOrdem, field.TypeFloat64, value)
 	}
 	if ouo.mutation.ProdutosCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -589,12 +669,12 @@ func (ouo *OrdemUpdateOne) sqlSave(ctx context.Context) (_node *Ordem, err error
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if ouo.mutation.ClientesCleared() {
+	if ouo.mutation.ClienteCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   ordem.ClientesTable,
-			Columns: []string{ordem.ClientesColumn},
+			Table:   ordem.ClienteTable,
+			Columns: []string{ordem.ClienteColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(cliente.FieldID, field.TypeInt),
@@ -602,12 +682,12 @@ func (ouo *OrdemUpdateOne) sqlSave(ctx context.Context) (_node *Ordem, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := ouo.mutation.ClientesIDs(); len(nodes) > 0 {
+	if nodes := ouo.mutation.ClienteIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   ordem.ClientesTable,
-			Columns: []string{ordem.ClientesColumn},
+			Table:   ordem.ClienteTable,
+			Columns: []string{ordem.ClienteColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(cliente.FieldID, field.TypeInt),

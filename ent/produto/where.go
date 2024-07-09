@@ -266,7 +266,7 @@ func HasStock() predicate.Produto {
 	return predicate.Produto(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, StockTable, StockColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, StockTable, StockColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})

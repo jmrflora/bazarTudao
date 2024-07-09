@@ -23,7 +23,7 @@ const (
 	// Table holds the table name of the stock in the database.
 	Table = "stocks"
 	// ProdutosTable is the table that holds the produtos relation/edge.
-	ProdutosTable = "produtos"
+	ProdutosTable = "stocks"
 	// ProdutosInverseTable is the table name for the Produto entity.
 	// It exists in this package in order to avoid circular dependency with the "produto" package.
 	ProdutosInverseTable = "produtos"
@@ -38,10 +38,21 @@ var Columns = []string{
 	FieldQuantidade,
 }
 
+// ForeignKeys holds the SQL foreign-keys that are owned by the "stocks"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"stock_produtos",
+}
+
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -71,23 +82,16 @@ func ByQuantidade(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldQuantidade, opts...).ToFunc()
 }
 
-// ByProdutosCount orders the results by produtos count.
-func ByProdutosCount(opts ...sql.OrderTermOption) OrderOption {
+// ByProdutosField orders the results by produtos field.
+func ByProdutosField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newProdutosStep(), opts...)
-	}
-}
-
-// ByProdutos orders the results by produtos terms.
-func ByProdutos(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newProdutosStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newProdutosStep(), sql.OrderByField(field, opts...))
 	}
 }
 func newProdutosStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ProdutosInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, ProdutosTable, ProdutosColumn),
+		sqlgraph.Edge(sqlgraph.M2O, false, ProdutosTable, ProdutosColumn),
 	)
 }

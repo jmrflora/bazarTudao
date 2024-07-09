@@ -84,6 +84,20 @@ func (cu *ClienteUpdate) SetNillableTelefone(s *string) *ClienteUpdate {
 	return cu
 }
 
+// SetEnderecoEntrega sets the "endereco_entrega" field.
+func (cu *ClienteUpdate) SetEnderecoEntrega(s string) *ClienteUpdate {
+	cu.mutation.SetEnderecoEntrega(s)
+	return cu
+}
+
+// SetNillableEnderecoEntrega sets the "endereco_entrega" field if the given value is not nil.
+func (cu *ClienteUpdate) SetNillableEnderecoEntrega(s *string) *ClienteUpdate {
+	if s != nil {
+		cu.SetEnderecoEntrega(*s)
+	}
+	return cu
+}
+
 // AddOrdenIDs adds the "ordens" edge to the Ordem entity by IDs.
 func (cu *ClienteUpdate) AddOrdenIDs(ids ...int) *ClienteUpdate {
 	cu.mutation.AddOrdenIDs(ids...)
@@ -172,6 +186,9 @@ func (cu *ClienteUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := cu.mutation.Telefone(); ok {
 		_spec.SetField(cliente.FieldTelefone, field.TypeString, value)
+	}
+	if value, ok := cu.mutation.EnderecoEntrega(); ok {
+		_spec.SetField(cliente.FieldEnderecoEntrega, field.TypeString, value)
 	}
 	if cu.mutation.OrdensCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -294,6 +311,20 @@ func (cuo *ClienteUpdateOne) SetNillableTelefone(s *string) *ClienteUpdateOne {
 	return cuo
 }
 
+// SetEnderecoEntrega sets the "endereco_entrega" field.
+func (cuo *ClienteUpdateOne) SetEnderecoEntrega(s string) *ClienteUpdateOne {
+	cuo.mutation.SetEnderecoEntrega(s)
+	return cuo
+}
+
+// SetNillableEnderecoEntrega sets the "endereco_entrega" field if the given value is not nil.
+func (cuo *ClienteUpdateOne) SetNillableEnderecoEntrega(s *string) *ClienteUpdateOne {
+	if s != nil {
+		cuo.SetEnderecoEntrega(*s)
+	}
+	return cuo
+}
+
 // AddOrdenIDs adds the "ordens" edge to the Ordem entity by IDs.
 func (cuo *ClienteUpdateOne) AddOrdenIDs(ids ...int) *ClienteUpdateOne {
 	cuo.mutation.AddOrdenIDs(ids...)
@@ -412,6 +443,9 @@ func (cuo *ClienteUpdateOne) sqlSave(ctx context.Context) (_node *Cliente, err e
 	}
 	if value, ok := cuo.mutation.Telefone(); ok {
 		_spec.SetField(cliente.FieldTelefone, field.TypeString, value)
+	}
+	if value, ok := cuo.mutation.EnderecoEntrega(); ok {
+		_spec.SetField(cliente.FieldEnderecoEntrega, field.TypeString, value)
 	}
 	if cuo.mutation.OrdensCleared() {
 		edge := &sqlgraph.EdgeSpec{

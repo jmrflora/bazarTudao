@@ -28,7 +28,6 @@ type ProdutoQuery struct {
 	withOrdens *OrdemQuery
 	withStock  *StockQuery
 	withItens  *ItemOrdemQuery
-	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -101,7 +100,7 @@ func (pq *ProdutoQuery) QueryStock() *StockQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(produto.Table, produto.FieldID, selector),
 			sqlgraph.To(stock.Table, stock.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, produto.StockTable, produto.StockColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, produto.StockTable, produto.StockColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -442,7 +441,6 @@ func (pq *ProdutoQuery) prepareQuery(ctx context.Context) error {
 func (pq *ProdutoQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Produto, error) {
 	var (
 		nodes       = []*Produto{}
-		withFKs     = pq.withFKs
 		_spec       = pq.querySpec()
 		loadedTypes = [3]bool{
 			pq.withOrdens != nil,
@@ -450,12 +448,6 @@ func (pq *ProdutoQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Prod
 			pq.withItens != nil,
 		}
 	)
-	if pq.withStock != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, produto.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Produto).scanValues(nil, columns)
 	}
@@ -482,8 +474,9 @@ func (pq *ProdutoQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Prod
 		}
 	}
 	if query := pq.withStock; query != nil {
-		if err := pq.loadStock(ctx, query, nodes, nil,
-			func(n *Produto, e *Stock) { n.Edges.Stock = e }); err != nil {
+		if err := pq.loadStock(ctx, query, nodes,
+			func(n *Produto) { n.Edges.Stock = []*Stock{} },
+			func(n *Produto, e *Stock) { n.Edges.Stock = append(n.Edges.Stock, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -559,34 +552,33 @@ func (pq *ProdutoQuery) loadOrdens(ctx context.Context, query *OrdemQuery, nodes
 	return nil
 }
 func (pq *ProdutoQuery) loadStock(ctx context.Context, query *StockQuery, nodes []*Produto, init func(*Produto), assign func(*Produto, *Stock)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*Produto)
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Produto)
 	for i := range nodes {
-		if nodes[i].stock_produtos == nil {
-			continue
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
 		}
-		fk := *nodes[i].stock_produtos
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(stock.IDIn(ids...))
+	query.withFKs = true
+	query.Where(predicate.Stock(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(produto.StockColumn), fks...))
+	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
+		fk := n.stock_produtos
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "stock_produtos" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "stock_produtos" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "stock_produtos" returned %v for node %v`, *fk, n.ID)
 		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
+		assign(node, n)
 	}
 	return nil
 }

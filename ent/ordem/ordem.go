@@ -3,6 +3,7 @@
 package ordem
 
 import (
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -16,12 +17,14 @@ const (
 	FieldID = "id"
 	// FieldDataOrdem holds the string denoting the data_ordem field in the database.
 	FieldDataOrdem = "data_ordem"
-	// FieldCompleta holds the string denoting the completa field in the database.
-	FieldCompleta = "completa"
+	// FieldStatus holds the string denoting the status field in the database.
+	FieldStatus = "status"
+	// FieldPrecoDaOrdem holds the string denoting the preco_da_ordem field in the database.
+	FieldPrecoDaOrdem = "preco_da_ordem"
 	// EdgeProdutos holds the string denoting the produtos edge name in mutations.
 	EdgeProdutos = "produtos"
-	// EdgeClientes holds the string denoting the clientes edge name in mutations.
-	EdgeClientes = "clientes"
+	// EdgeCliente holds the string denoting the cliente edge name in mutations.
+	EdgeCliente = "cliente"
 	// EdgeItems holds the string denoting the items edge name in mutations.
 	EdgeItems = "items"
 	// Table holds the table name of the ordem in the database.
@@ -31,13 +34,13 @@ const (
 	// ProdutosInverseTable is the table name for the Produto entity.
 	// It exists in this package in order to avoid circular dependency with the "produto" package.
 	ProdutosInverseTable = "produtos"
-	// ClientesTable is the table that holds the clientes relation/edge.
-	ClientesTable = "ordems"
-	// ClientesInverseTable is the table name for the Cliente entity.
+	// ClienteTable is the table that holds the cliente relation/edge.
+	ClienteTable = "ordems"
+	// ClienteInverseTable is the table name for the Cliente entity.
 	// It exists in this package in order to avoid circular dependency with the "cliente" package.
-	ClientesInverseTable = "clientes"
-	// ClientesColumn is the table column denoting the clientes relation/edge.
-	ClientesColumn = "cliente_ordens"
+	ClienteInverseTable = "clientes"
+	// ClienteColumn is the table column denoting the cliente relation/edge.
+	ClienteColumn = "cliente_ordens"
 	// ItemsTable is the table that holds the items relation/edge.
 	ItemsTable = "item_ordems"
 	// ItemsInverseTable is the table name for the ItemOrdem entity.
@@ -51,7 +54,8 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldDataOrdem,
-	FieldCompleta,
+	FieldStatus,
+	FieldPrecoDaOrdem,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "ordems"
@@ -84,9 +88,34 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultDataOrdem holds the default value on creation for the "data_ordem" field.
 	DefaultDataOrdem func() time.Time
-	// DefaultCompleta holds the default value on creation for the "completa" field.
-	DefaultCompleta bool
 )
+
+// Status defines the type for the "status" enum field.
+type Status string
+
+// StatusIntocada is the default value of the Status enum.
+const DefaultStatus = StatusIntocada
+
+// Status values.
+const (
+	StatusCompleta Status = "completa"
+	StatusParcial  Status = "parcial"
+	StatusIntocada Status = "intocada"
+)
+
+func (s Status) String() string {
+	return string(s)
+}
+
+// StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
+func StatusValidator(s Status) error {
+	switch s {
+	case StatusCompleta, StatusParcial, StatusIntocada:
+		return nil
+	default:
+		return fmt.Errorf("ordem: invalid enum value for status field: %q", s)
+	}
+}
 
 // OrderOption defines the ordering options for the Ordem queries.
 type OrderOption func(*sql.Selector)
@@ -101,9 +130,14 @@ func ByDataOrdem(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDataOrdem, opts...).ToFunc()
 }
 
-// ByCompleta orders the results by the completa field.
-func ByCompleta(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCompleta, opts...).ToFunc()
+// ByStatus orders the results by the status field.
+func ByStatus(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStatus, opts...).ToFunc()
+}
+
+// ByPrecoDaOrdem orders the results by the preco_da_ordem field.
+func ByPrecoDaOrdem(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPrecoDaOrdem, opts...).ToFunc()
 }
 
 // ByProdutosCount orders the results by produtos count.
@@ -120,10 +154,10 @@ func ByProdutos(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByClientesField orders the results by clientes field.
-func ByClientesField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByClienteField orders the results by cliente field.
+func ByClienteField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newClientesStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborTerms(s, newClienteStep(), sql.OrderByField(field, opts...))
 	}
 }
 
@@ -147,11 +181,11 @@ func newProdutosStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2M, false, ProdutosTable, ProdutosPrimaryKey...),
 	)
 }
-func newClientesStep() *sqlgraph.Step {
+func newClienteStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(ClientesInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, ClientesTable, ClientesColumn),
+		sqlgraph.To(ClienteInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, ClienteTable, ClienteColumn),
 	)
 }
 func newItemsStep() *sqlgraph.Step {

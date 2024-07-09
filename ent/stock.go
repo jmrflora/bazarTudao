@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/jmrflora/bazarTudao/ent/produto"
 	"github.com/jmrflora/bazarTudao/ent/stock"
 )
 
@@ -23,24 +24,27 @@ type Stock struct {
 	Quantidade int `json:"quantidade,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the StockQuery when eager-loading is set.
-	Edges        StockEdges `json:"edges"`
-	selectValues sql.SelectValues
+	Edges          StockEdges `json:"edges"`
+	stock_produtos *int
+	selectValues   sql.SelectValues
 }
 
 // StockEdges holds the relations/edges for other nodes in the graph.
 type StockEdges struct {
 	// Produtos holds the value of the produtos edge.
-	Produtos []*Produto `json:"produtos,omitempty"`
+	Produtos *Produto `json:"produtos,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool
 }
 
 // ProdutosOrErr returns the Produtos value or an error if the edge
-// was not loaded in eager-loading.
-func (e StockEdges) ProdutosOrErr() ([]*Produto, error) {
-	if e.loadedTypes[0] {
+// was not loaded in eager-loading, or loaded but was not found.
+func (e StockEdges) ProdutosOrErr() (*Produto, error) {
+	if e.Produtos != nil {
 		return e.Produtos, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: produto.Label}
 	}
 	return nil, &NotLoadedError{edge: "produtos"}
 }
@@ -54,6 +58,8 @@ func (*Stock) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case stock.FieldDataMovimento:
 			values[i] = new(sql.NullTime)
+		case stock.ForeignKeys[0]: // stock_produtos
+			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -86,6 +92,13 @@ func (s *Stock) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field quantidade", values[i])
 			} else if value.Valid {
 				s.Quantidade = int(value.Int64)
+			}
+		case stock.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field stock_produtos", value)
+			} else if value.Valid {
+				s.stock_produtos = new(int)
+				*s.stock_produtos = int(value.Int64)
 			}
 		default:
 			s.selectValues.Set(columns[i], values[i])

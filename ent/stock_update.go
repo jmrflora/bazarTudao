@@ -64,19 +64,23 @@ func (su *StockUpdate) AddQuantidade(i int) *StockUpdate {
 	return su
 }
 
-// AddProdutoIDs adds the "produtos" edge to the Produto entity by IDs.
-func (su *StockUpdate) AddProdutoIDs(ids ...int) *StockUpdate {
-	su.mutation.AddProdutoIDs(ids...)
+// SetProdutosID sets the "produtos" edge to the Produto entity by ID.
+func (su *StockUpdate) SetProdutosID(id int) *StockUpdate {
+	su.mutation.SetProdutosID(id)
 	return su
 }
 
-// AddProdutos adds the "produtos" edges to the Produto entity.
-func (su *StockUpdate) AddProdutos(p ...*Produto) *StockUpdate {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
+// SetNillableProdutosID sets the "produtos" edge to the Produto entity by ID if the given value is not nil.
+func (su *StockUpdate) SetNillableProdutosID(id *int) *StockUpdate {
+	if id != nil {
+		su = su.SetProdutosID(*id)
 	}
-	return su.AddProdutoIDs(ids...)
+	return su
+}
+
+// SetProdutos sets the "produtos" edge to the Produto entity.
+func (su *StockUpdate) SetProdutos(p *Produto) *StockUpdate {
+	return su.SetProdutosID(p.ID)
 }
 
 // Mutation returns the StockMutation object of the builder.
@@ -84,25 +88,10 @@ func (su *StockUpdate) Mutation() *StockMutation {
 	return su.mutation
 }
 
-// ClearProdutos clears all "produtos" edges to the Produto entity.
+// ClearProdutos clears the "produtos" edge to the Produto entity.
 func (su *StockUpdate) ClearProdutos() *StockUpdate {
 	su.mutation.ClearProdutos()
 	return su
-}
-
-// RemoveProdutoIDs removes the "produtos" edge to Produto entities by IDs.
-func (su *StockUpdate) RemoveProdutoIDs(ids ...int) *StockUpdate {
-	su.mutation.RemoveProdutoIDs(ids...)
-	return su
-}
-
-// RemoveProdutos removes "produtos" edges to Produto entities.
-func (su *StockUpdate) RemoveProdutos(p ...*Produto) *StockUpdate {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
-	}
-	return su.RemoveProdutoIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -152,7 +141,7 @@ func (su *StockUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if su.mutation.ProdutosCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: false,
 			Table:   stock.ProdutosTable,
 			Columns: []string{stock.ProdutosColumn},
@@ -160,28 +149,12 @@ func (su *StockUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(produto.FieldID, field.TypeInt),
 			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := su.mutation.RemovedProdutosIDs(); len(nodes) > 0 && !su.mutation.ProdutosCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   stock.ProdutosTable,
-			Columns: []string{stock.ProdutosColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(produto.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := su.mutation.ProdutosIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: false,
 			Table:   stock.ProdutosTable,
 			Columns: []string{stock.ProdutosColumn},
@@ -250,19 +223,23 @@ func (suo *StockUpdateOne) AddQuantidade(i int) *StockUpdateOne {
 	return suo
 }
 
-// AddProdutoIDs adds the "produtos" edge to the Produto entity by IDs.
-func (suo *StockUpdateOne) AddProdutoIDs(ids ...int) *StockUpdateOne {
-	suo.mutation.AddProdutoIDs(ids...)
+// SetProdutosID sets the "produtos" edge to the Produto entity by ID.
+func (suo *StockUpdateOne) SetProdutosID(id int) *StockUpdateOne {
+	suo.mutation.SetProdutosID(id)
 	return suo
 }
 
-// AddProdutos adds the "produtos" edges to the Produto entity.
-func (suo *StockUpdateOne) AddProdutos(p ...*Produto) *StockUpdateOne {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
+// SetNillableProdutosID sets the "produtos" edge to the Produto entity by ID if the given value is not nil.
+func (suo *StockUpdateOne) SetNillableProdutosID(id *int) *StockUpdateOne {
+	if id != nil {
+		suo = suo.SetProdutosID(*id)
 	}
-	return suo.AddProdutoIDs(ids...)
+	return suo
+}
+
+// SetProdutos sets the "produtos" edge to the Produto entity.
+func (suo *StockUpdateOne) SetProdutos(p *Produto) *StockUpdateOne {
+	return suo.SetProdutosID(p.ID)
 }
 
 // Mutation returns the StockMutation object of the builder.
@@ -270,25 +247,10 @@ func (suo *StockUpdateOne) Mutation() *StockMutation {
 	return suo.mutation
 }
 
-// ClearProdutos clears all "produtos" edges to the Produto entity.
+// ClearProdutos clears the "produtos" edge to the Produto entity.
 func (suo *StockUpdateOne) ClearProdutos() *StockUpdateOne {
 	suo.mutation.ClearProdutos()
 	return suo
-}
-
-// RemoveProdutoIDs removes the "produtos" edge to Produto entities by IDs.
-func (suo *StockUpdateOne) RemoveProdutoIDs(ids ...int) *StockUpdateOne {
-	suo.mutation.RemoveProdutoIDs(ids...)
-	return suo
-}
-
-// RemoveProdutos removes "produtos" edges to Produto entities.
-func (suo *StockUpdateOne) RemoveProdutos(p ...*Produto) *StockUpdateOne {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
-	}
-	return suo.RemoveProdutoIDs(ids...)
 }
 
 // Where appends a list predicates to the StockUpdate builder.
@@ -368,7 +330,7 @@ func (suo *StockUpdateOne) sqlSave(ctx context.Context) (_node *Stock, err error
 	}
 	if suo.mutation.ProdutosCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: false,
 			Table:   stock.ProdutosTable,
 			Columns: []string{stock.ProdutosColumn},
@@ -376,28 +338,12 @@ func (suo *StockUpdateOne) sqlSave(ctx context.Context) (_node *Stock, err error
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(produto.FieldID, field.TypeInt),
 			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := suo.mutation.RemovedProdutosIDs(); len(nodes) > 0 && !suo.mutation.ProdutosCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   stock.ProdutosTable,
-			Columns: []string{stock.ProdutosColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(produto.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := suo.mutation.ProdutosIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: false,
 			Table:   stock.ProdutosTable,
 			Columns: []string{stock.ProdutosColumn},

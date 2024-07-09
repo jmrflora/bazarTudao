@@ -1,0 +1,6 @@
+order_id,e-mail,nome,cpf,telefone,sku,nome_produto,quant,preco,endereco
+1,cliente1@example.com,Cliente 1,12345678901,1111111111,SKU001,Produto A,2,10.0,"Rua 1, 123"
+1,cliente1@example.com,Cliente 1,12345678901,1111111111,SKU002,Produto B,1,20.0,"Rua 1, 123"
+2,cliente2@example.com,Cliente 2,23456789012,2222222222,SKU003,Produto C,3,30.0,"Rua 2, 234"
+3,cliente3@example.com,Cliente 3,34567890123,3333333333,SKU004,Produto D,1,40.0,"Rua 3, 345"
+3,cliente3@example.com,Cliente 3,34567890123,3333333333,SKU005,Produto E,2,50.0,"Rua 3, 345"

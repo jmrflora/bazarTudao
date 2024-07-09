@@ -32,7 +32,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "ordem" package.
 	OrdensInverseTable = "ordems"
 	// StockTable is the table that holds the stock relation/edge.
-	StockTable = "produtos"
+	StockTable = "stocks"
 	// StockInverseTable is the table name for the Stock entity.
 	// It exists in this package in order to avoid circular dependency with the "stock" package.
 	StockInverseTable = "stocks"
@@ -55,12 +55,6 @@ var Columns = []string{
 	FieldQuantNoEstoque,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the "produtos"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"stock_produtos",
-}
-
 var (
 	// OrdensPrimaryKey and OrdensColumn2 are the table columns denoting the
 	// primary key for the ordens relation (M2M).
@@ -71,11 +65,6 @@ var (
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
-			return true
-		}
-	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -119,10 +108,17 @@ func ByOrdens(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByStockField orders the results by stock field.
-func ByStockField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByStockCount orders the results by stock count.
+func ByStockCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newStockStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborsCount(s, newStockStep(), opts...)
+	}
+}
+
+// ByStock orders the results by stock terms.
+func ByStock(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newStockStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
@@ -150,7 +146,7 @@ func newStockStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(StockInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, StockTable, StockColumn),
+		sqlgraph.Edge(sqlgraph.O2M, true, StockTable, StockColumn),
 	)
 }
 func newItensStep() *sqlgraph.Step {

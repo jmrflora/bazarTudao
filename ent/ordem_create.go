@@ -37,17 +37,29 @@ func (oc *OrdemCreate) SetNillableDataOrdem(t *time.Time) *OrdemCreate {
 	return oc
 }
 
-// SetCompleta sets the "completa" field.
-func (oc *OrdemCreate) SetCompleta(b bool) *OrdemCreate {
-	oc.mutation.SetCompleta(b)
+// SetStatus sets the "status" field.
+func (oc *OrdemCreate) SetStatus(o ordem.Status) *OrdemCreate {
+	oc.mutation.SetStatus(o)
 	return oc
 }
 
-// SetNillableCompleta sets the "completa" field if the given value is not nil.
-func (oc *OrdemCreate) SetNillableCompleta(b *bool) *OrdemCreate {
-	if b != nil {
-		oc.SetCompleta(*b)
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (oc *OrdemCreate) SetNillableStatus(o *ordem.Status) *OrdemCreate {
+	if o != nil {
+		oc.SetStatus(*o)
 	}
+	return oc
+}
+
+// SetPrecoDaOrdem sets the "preco_da_ordem" field.
+func (oc *OrdemCreate) SetPrecoDaOrdem(f float64) *OrdemCreate {
+	oc.mutation.SetPrecoDaOrdem(f)
+	return oc
+}
+
+// SetID sets the "id" field.
+func (oc *OrdemCreate) SetID(i int) *OrdemCreate {
+	oc.mutation.SetID(i)
 	return oc
 }
 
@@ -66,23 +78,23 @@ func (oc *OrdemCreate) AddProdutos(p ...*Produto) *OrdemCreate {
 	return oc.AddProdutoIDs(ids...)
 }
 
-// SetClientesID sets the "clientes" edge to the Cliente entity by ID.
-func (oc *OrdemCreate) SetClientesID(id int) *OrdemCreate {
-	oc.mutation.SetClientesID(id)
+// SetClienteID sets the "cliente" edge to the Cliente entity by ID.
+func (oc *OrdemCreate) SetClienteID(id int) *OrdemCreate {
+	oc.mutation.SetClienteID(id)
 	return oc
 }
 
-// SetNillableClientesID sets the "clientes" edge to the Cliente entity by ID if the given value is not nil.
-func (oc *OrdemCreate) SetNillableClientesID(id *int) *OrdemCreate {
+// SetNillableClienteID sets the "cliente" edge to the Cliente entity by ID if the given value is not nil.
+func (oc *OrdemCreate) SetNillableClienteID(id *int) *OrdemCreate {
 	if id != nil {
-		oc = oc.SetClientesID(*id)
+		oc = oc.SetClienteID(*id)
 	}
 	return oc
 }
 
-// SetClientes sets the "clientes" edge to the Cliente entity.
-func (oc *OrdemCreate) SetClientes(c *Cliente) *OrdemCreate {
-	return oc.SetClientesID(c.ID)
+// SetCliente sets the "cliente" edge to the Cliente entity.
+func (oc *OrdemCreate) SetCliente(c *Cliente) *OrdemCreate {
+	return oc.SetClienteID(c.ID)
 }
 
 // AddItemIDs adds the "items" edge to the ItemOrdem entity by IDs.
@@ -139,9 +151,9 @@ func (oc *OrdemCreate) defaults() {
 		v := ordem.DefaultDataOrdem()
 		oc.mutation.SetDataOrdem(v)
 	}
-	if _, ok := oc.mutation.Completa(); !ok {
-		v := ordem.DefaultCompleta
-		oc.mutation.SetCompleta(v)
+	if _, ok := oc.mutation.Status(); !ok {
+		v := ordem.DefaultStatus
+		oc.mutation.SetStatus(v)
 	}
 }
 
@@ -150,8 +162,16 @@ func (oc *OrdemCreate) check() error {
 	if _, ok := oc.mutation.DataOrdem(); !ok {
 		return &ValidationError{Name: "data_ordem", err: errors.New(`ent: missing required field "Ordem.data_ordem"`)}
 	}
-	if _, ok := oc.mutation.Completa(); !ok {
-		return &ValidationError{Name: "completa", err: errors.New(`ent: missing required field "Ordem.completa"`)}
+	if _, ok := oc.mutation.Status(); !ok {
+		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Ordem.status"`)}
+	}
+	if v, ok := oc.mutation.Status(); ok {
+		if err := ordem.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Ordem.status": %w`, err)}
+		}
+	}
+	if _, ok := oc.mutation.PrecoDaOrdem(); !ok {
+		return &ValidationError{Name: "preco_da_ordem", err: errors.New(`ent: missing required field "Ordem.preco_da_ordem"`)}
 	}
 	return nil
 }
@@ -167,8 +187,10 @@ func (oc *OrdemCreate) sqlSave(ctx context.Context) (*Ordem, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int(id)
+	}
 	oc.mutation.id = &_node.ID
 	oc.mutation.done = true
 	return _node, nil
@@ -179,13 +201,21 @@ func (oc *OrdemCreate) createSpec() (*Ordem, *sqlgraph.CreateSpec) {
 		_node = &Ordem{config: oc.config}
 		_spec = sqlgraph.NewCreateSpec(ordem.Table, sqlgraph.NewFieldSpec(ordem.FieldID, field.TypeInt))
 	)
+	if id, ok := oc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
 	if value, ok := oc.mutation.DataOrdem(); ok {
 		_spec.SetField(ordem.FieldDataOrdem, field.TypeTime, value)
 		_node.DataOrdem = value
 	}
-	if value, ok := oc.mutation.Completa(); ok {
-		_spec.SetField(ordem.FieldCompleta, field.TypeBool, value)
-		_node.Completa = value
+	if value, ok := oc.mutation.Status(); ok {
+		_spec.SetField(ordem.FieldStatus, field.TypeEnum, value)
+		_node.Status = value
+	}
+	if value, ok := oc.mutation.PrecoDaOrdem(); ok {
+		_spec.SetField(ordem.FieldPrecoDaOrdem, field.TypeFloat64, value)
+		_node.PrecoDaOrdem = value
 	}
 	if nodes := oc.mutation.ProdutosIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -203,12 +233,12 @@ func (oc *OrdemCreate) createSpec() (*Ordem, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := oc.mutation.ClientesIDs(); len(nodes) > 0 {
+	if nodes := oc.mutation.ClienteIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   ordem.ClientesTable,
-			Columns: []string{ordem.ClientesColumn},
+			Table:   ordem.ClienteTable,
+			Columns: []string{ordem.ClienteColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(cliente.FieldID, field.TypeInt),
@@ -284,7 +314,7 @@ func (ocb *OrdemCreateBulk) Save(ctx context.Context) ([]*Ordem, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
 					nodes[i].ID = int(id)
 				}

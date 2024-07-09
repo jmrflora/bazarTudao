@@ -20,6 +20,8 @@ const (
 	FieldCpf = "cpf"
 	// FieldTelefone holds the string denoting the telefone field in the database.
 	FieldTelefone = "telefone"
+	// FieldEnderecoEntrega holds the string denoting the endereco_entrega field in the database.
+	FieldEnderecoEntrega = "endereco_entrega"
 	// EdgeOrdens holds the string denoting the ordens edge name in mutations.
 	EdgeOrdens = "ordens"
 	// Table holds the table name of the cliente in the database.
@@ -40,6 +42,7 @@ var Columns = []string{
 	FieldNome,
 	FieldCpf,
 	FieldTelefone,
+	FieldEnderecoEntrega,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -78,6 +81,11 @@ func ByCpf(opts ...sql.OrderTermOption) OrderOption {
 // ByTelefone orders the results by the telefone field.
 func ByTelefone(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTelefone, opts...).ToFunc()
+}
+
+// ByEnderecoEntrega orders the results by the endereco_entrega field.
+func ByEnderecoEntrega(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEnderecoEntrega, opts...).ToFunc()
 }
 
 // ByOrdensCount orders the results by ordens count.

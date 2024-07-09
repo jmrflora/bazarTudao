@@ -17,11 +17,13 @@ import (
 type Ordem struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID int `json:"oid,omitempty"`
 	// DataOrdem holds the value of the "data_ordem" field.
 	DataOrdem time.Time `json:"data_ordem,omitempty"`
-	// Completa holds the value of the "completa" field.
-	Completa bool `json:"completa,omitempty"`
+	// Status holds the value of the "status" field.
+	Status ordem.Status `json:"status,omitempty"`
+	// PrecoDaOrdem holds the value of the "preco_da_ordem" field.
+	PrecoDaOrdem float64 `json:"preco_da_ordem,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the OrdemQuery when eager-loading is set.
 	Edges          OrdemEdges `json:"edges"`
@@ -33,8 +35,8 @@ type Ordem struct {
 type OrdemEdges struct {
 	// Produtos holds the value of the produtos edge.
 	Produtos []*Produto `json:"produtos,omitempty"`
-	// Clientes holds the value of the clientes edge.
-	Clientes *Cliente `json:"clientes,omitempty"`
+	// Cliente holds the value of the cliente edge.
+	Cliente *Cliente `json:"cliente,omitempty"`
 	// Items holds the value of the items edge.
 	Items []*ItemOrdem `json:"items,omitempty"`
 	// loadedTypes holds the information for reporting if a
@@ -51,15 +53,15 @@ func (e OrdemEdges) ProdutosOrErr() ([]*Produto, error) {
 	return nil, &NotLoadedError{edge: "produtos"}
 }
 
-// ClientesOrErr returns the Clientes value or an error if the edge
+// ClienteOrErr returns the Cliente value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e OrdemEdges) ClientesOrErr() (*Cliente, error) {
-	if e.Clientes != nil {
-		return e.Clientes, nil
+func (e OrdemEdges) ClienteOrErr() (*Cliente, error) {
+	if e.Cliente != nil {
+		return e.Cliente, nil
 	} else if e.loadedTypes[1] {
 		return nil, &NotFoundError{label: cliente.Label}
 	}
-	return nil, &NotLoadedError{edge: "clientes"}
+	return nil, &NotLoadedError{edge: "cliente"}
 }
 
 // ItemsOrErr returns the Items value or an error if the edge
@@ -76,10 +78,12 @@ func (*Ordem) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case ordem.FieldCompleta:
-			values[i] = new(sql.NullBool)
+		case ordem.FieldPrecoDaOrdem:
+			values[i] = new(sql.NullFloat64)
 		case ordem.FieldID:
 			values[i] = new(sql.NullInt64)
+		case ordem.FieldStatus:
+			values[i] = new(sql.NullString)
 		case ordem.FieldDataOrdem:
 			values[i] = new(sql.NullTime)
 		case ordem.ForeignKeys[0]: // cliente_ordens
@@ -111,11 +115,17 @@ func (o *Ordem) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				o.DataOrdem = value.Time
 			}
-		case ordem.FieldCompleta:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field completa", values[i])
+		case ordem.FieldStatus:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
-				o.Completa = value.Bool
+				o.Status = ordem.Status(value.String)
+			}
+		case ordem.FieldPrecoDaOrdem:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field preco_da_ordem", values[i])
+			} else if value.Valid {
+				o.PrecoDaOrdem = value.Float64
 			}
 		case ordem.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -142,9 +152,9 @@ func (o *Ordem) QueryProdutos() *ProdutoQuery {
 	return NewOrdemClient(o.config).QueryProdutos(o)
 }
 
-// QueryClientes queries the "clientes" edge of the Ordem entity.
-func (o *Ordem) QueryClientes() *ClienteQuery {
-	return NewOrdemClient(o.config).QueryClientes(o)
+// QueryCliente queries the "cliente" edge of the Ordem entity.
+func (o *Ordem) QueryCliente() *ClienteQuery {
+	return NewOrdemClient(o.config).QueryCliente(o)
 }
 
 // QueryItems queries the "items" edge of the Ordem entity.
@@ -178,8 +188,11 @@ func (o *Ordem) String() string {
 	builder.WriteString("data_ordem=")
 	builder.WriteString(o.DataOrdem.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("completa=")
-	builder.WriteString(fmt.Sprintf("%v", o.Completa))
+	builder.WriteString("status=")
+	builder.WriteString(fmt.Sprintf("%v", o.Status))
+	builder.WriteString(", ")
+	builder.WriteString("preco_da_ordem=")
+	builder.WriteString(fmt.Sprintf("%v", o.PrecoDaOrdem))
 	builder.WriteByte(')')
 	return builder.String()
 }

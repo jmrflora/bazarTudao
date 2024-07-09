@@ -73,6 +73,11 @@ func Telefone(v string) predicate.Cliente {
 	return predicate.Cliente(sql.FieldEQ(FieldTelefone, v))
 }
 
+// EnderecoEntrega applies equality check predicate on the "endereco_entrega" field. It's identical to EnderecoEntregaEQ.
+func EnderecoEntrega(v string) predicate.Cliente {
+	return predicate.Cliente(sql.FieldEQ(FieldEnderecoEntrega, v))
+}
+
 // EmailEQ applies the EQ predicate on the "email" field.
 func EmailEQ(v string) predicate.Cliente {
 	return predicate.Cliente(sql.FieldEQ(FieldEmail, v))
@@ -331,6 +336,71 @@ func TelefoneEqualFold(v string) predicate.Cliente {
 // TelefoneContainsFold applies the ContainsFold predicate on the "telefone" field.
 func TelefoneContainsFold(v string) predicate.Cliente {
 	return predicate.Cliente(sql.FieldContainsFold(FieldTelefone, v))
+}
+
+// EnderecoEntregaEQ applies the EQ predicate on the "endereco_entrega" field.
+func EnderecoEntregaEQ(v string) predicate.Cliente {
+	return predicate.Cliente(sql.FieldEQ(FieldEnderecoEntrega, v))
+}
+
+// EnderecoEntregaNEQ applies the NEQ predicate on the "endereco_entrega" field.
+func EnderecoEntregaNEQ(v string) predicate.Cliente {
+	return predicate.Cliente(sql.FieldNEQ(FieldEnderecoEntrega, v))
+}
+
+// EnderecoEntregaIn applies the In predicate on the "endereco_entrega" field.
+func EnderecoEntregaIn(vs ...string) predicate.Cliente {
+	return predicate.Cliente(sql.FieldIn(FieldEnderecoEntrega, vs...))
+}
+
+// EnderecoEntregaNotIn applies the NotIn predicate on the "endereco_entrega" field.
+func EnderecoEntregaNotIn(vs ...string) predicate.Cliente {
+	return predicate.Cliente(sql.FieldNotIn(FieldEnderecoEntrega, vs...))
+}
+
+// EnderecoEntregaGT applies the GT predicate on the "endereco_entrega" field.
+func EnderecoEntregaGT(v string) predicate.Cliente {
+	return predicate.Cliente(sql.FieldGT(FieldEnderecoEntrega, v))
+}
+
+// EnderecoEntregaGTE applies the GTE predicate on the "endereco_entrega" field.
+func EnderecoEntregaGTE(v string) predicate.Cliente {
+	return predicate.Cliente(sql.FieldGTE(FieldEnderecoEntrega, v))
+}
+
+// EnderecoEntregaLT applies the LT predicate on the "endereco_entrega" field.
+func EnderecoEntregaLT(v string) predicate.Cliente {
+	return predicate.Cliente(sql.FieldLT(FieldEnderecoEntrega, v))
+}
+
+// EnderecoEntregaLTE applies the LTE predicate on the "endereco_entrega" field.
+func EnderecoEntregaLTE(v string) predicate.Cliente {
+	return predicate.Cliente(sql.FieldLTE(FieldEnderecoEntrega, v))
+}
+
+// EnderecoEntregaContains applies the Contains predicate on the "endereco_entrega" field.
+func EnderecoEntregaContains(v string) predicate.Cliente {
+	return predicate.Cliente(sql.FieldContains(FieldEnderecoEntrega, v))
+}
+
+// EnderecoEntregaHasPrefix applies the HasPrefix predicate on the "endereco_entrega" field.
+func EnderecoEntregaHasPrefix(v string) predicate.Cliente {
+	return predicate.Cliente(sql.FieldHasPrefix(FieldEnderecoEntrega, v))
+}
+
+// EnderecoEntregaHasSuffix applies the HasSuffix predicate on the "endereco_entrega" field.
+func EnderecoEntregaHasSuffix(v string) predicate.Cliente {
+	return predicate.Cliente(sql.FieldHasSuffix(FieldEnderecoEntrega, v))
+}
+
+// EnderecoEntregaEqualFold applies the EqualFold predicate on the "endereco_entrega" field.
+func EnderecoEntregaEqualFold(v string) predicate.Cliente {
+	return predicate.Cliente(sql.FieldEqualFold(FieldEnderecoEntrega, v))
+}
+
+// EnderecoEntregaContainsFold applies the ContainsFold predicate on the "endereco_entrega" field.
+func EnderecoEntregaContainsFold(v string) predicate.Cliente {
+	return predicate.Cliente(sql.FieldContainsFold(FieldEnderecoEntrega, v))
 }
 
 // HasOrdens applies the HasEdge predicate on the "ordens" edge.

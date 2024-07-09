@@ -24,13 +24,9 @@ func init() {
 	ordemFields := schema.Ordem{}.Fields()
 	_ = ordemFields
 	// ordemDescDataOrdem is the schema descriptor for data_ordem field.
-	ordemDescDataOrdem := ordemFields[0].Descriptor()
+	ordemDescDataOrdem := ordemFields[1].Descriptor()
 	// ordem.DefaultDataOrdem holds the default value on creation for the data_ordem field.
 	ordem.DefaultDataOrdem = ordemDescDataOrdem.Default.(func() time.Time)
-	// ordemDescCompleta is the schema descriptor for completa field.
-	ordemDescCompleta := ordemFields[1].Descriptor()
-	// ordem.DefaultCompleta holds the default value on creation for the completa field.
-	ordem.DefaultCompleta = ordemDescCompleta.Default.(bool)
 	stockFields := schema.Stock{}.Fields()
 	_ = stockFields
 	// stockDescDataMovimento is the schema descriptor for data_movimento field.

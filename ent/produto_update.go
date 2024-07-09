@@ -94,23 +94,19 @@ func (pu *ProdutoUpdate) AddOrdens(o ...*Ordem) *ProdutoUpdate {
 	return pu.AddOrdenIDs(ids...)
 }
 
-// SetStockID sets the "stock" edge to the Stock entity by ID.
-func (pu *ProdutoUpdate) SetStockID(id int) *ProdutoUpdate {
-	pu.mutation.SetStockID(id)
+// AddStockIDs adds the "stock" edge to the Stock entity by IDs.
+func (pu *ProdutoUpdate) AddStockIDs(ids ...int) *ProdutoUpdate {
+	pu.mutation.AddStockIDs(ids...)
 	return pu
 }
 
-// SetNillableStockID sets the "stock" edge to the Stock entity by ID if the given value is not nil.
-func (pu *ProdutoUpdate) SetNillableStockID(id *int) *ProdutoUpdate {
-	if id != nil {
-		pu = pu.SetStockID(*id)
+// AddStock adds the "stock" edges to the Stock entity.
+func (pu *ProdutoUpdate) AddStock(s ...*Stock) *ProdutoUpdate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
 	}
-	return pu
-}
-
-// SetStock sets the "stock" edge to the Stock entity.
-func (pu *ProdutoUpdate) SetStock(s *Stock) *ProdutoUpdate {
-	return pu.SetStockID(s.ID)
+	return pu.AddStockIDs(ids...)
 }
 
 // AddItenIDs adds the "itens" edge to the ItemOrdem entity by IDs.
@@ -154,10 +150,25 @@ func (pu *ProdutoUpdate) RemoveOrdens(o ...*Ordem) *ProdutoUpdate {
 	return pu.RemoveOrdenIDs(ids...)
 }
 
-// ClearStock clears the "stock" edge to the Stock entity.
+// ClearStock clears all "stock" edges to the Stock entity.
 func (pu *ProdutoUpdate) ClearStock() *ProdutoUpdate {
 	pu.mutation.ClearStock()
 	return pu
+}
+
+// RemoveStockIDs removes the "stock" edge to Stock entities by IDs.
+func (pu *ProdutoUpdate) RemoveStockIDs(ids ...int) *ProdutoUpdate {
+	pu.mutation.RemoveStockIDs(ids...)
+	return pu
+}
+
+// RemoveStock removes "stock" edges to Stock entities.
+func (pu *ProdutoUpdate) RemoveStock(s ...*Stock) *ProdutoUpdate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return pu.RemoveStockIDs(ids...)
 }
 
 // ClearItens clears all "itens" edges to the ItemOrdem entity.
@@ -276,7 +287,7 @@ func (pu *ProdutoUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if pu.mutation.StockCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: true,
 			Table:   produto.StockTable,
 			Columns: []string{produto.StockColumn},
@@ -287,9 +298,25 @@ func (pu *ProdutoUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
+	if nodes := pu.mutation.RemovedStockIDs(); len(nodes) > 0 && !pu.mutation.StockCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   produto.StockTable,
+			Columns: []string{produto.StockColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(stock.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
 	if nodes := pu.mutation.StockIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: true,
 			Table:   produto.StockTable,
 			Columns: []string{produto.StockColumn},
@@ -432,23 +459,19 @@ func (puo *ProdutoUpdateOne) AddOrdens(o ...*Ordem) *ProdutoUpdateOne {
 	return puo.AddOrdenIDs(ids...)
 }
 
-// SetStockID sets the "stock" edge to the Stock entity by ID.
-func (puo *ProdutoUpdateOne) SetStockID(id int) *ProdutoUpdateOne {
-	puo.mutation.SetStockID(id)
+// AddStockIDs adds the "stock" edge to the Stock entity by IDs.
+func (puo *ProdutoUpdateOne) AddStockIDs(ids ...int) *ProdutoUpdateOne {
+	puo.mutation.AddStockIDs(ids...)
 	return puo
 }
 
-// SetNillableStockID sets the "stock" edge to the Stock entity by ID if the given value is not nil.
-func (puo *ProdutoUpdateOne) SetNillableStockID(id *int) *ProdutoUpdateOne {
-	if id != nil {
-		puo = puo.SetStockID(*id)
+// AddStock adds the "stock" edges to the Stock entity.
+func (puo *ProdutoUpdateOne) AddStock(s ...*Stock) *ProdutoUpdateOne {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
 	}
-	return puo
-}
-
-// SetStock sets the "stock" edge to the Stock entity.
-func (puo *ProdutoUpdateOne) SetStock(s *Stock) *ProdutoUpdateOne {
-	return puo.SetStockID(s.ID)
+	return puo.AddStockIDs(ids...)
 }
 
 // AddItenIDs adds the "itens" edge to the ItemOrdem entity by IDs.
@@ -492,10 +515,25 @@ func (puo *ProdutoUpdateOne) RemoveOrdens(o ...*Ordem) *ProdutoUpdateOne {
 	return puo.RemoveOrdenIDs(ids...)
 }
 
-// ClearStock clears the "stock" edge to the Stock entity.
+// ClearStock clears all "stock" edges to the Stock entity.
 func (puo *ProdutoUpdateOne) ClearStock() *ProdutoUpdateOne {
 	puo.mutation.ClearStock()
 	return puo
+}
+
+// RemoveStockIDs removes the "stock" edge to Stock entities by IDs.
+func (puo *ProdutoUpdateOne) RemoveStockIDs(ids ...int) *ProdutoUpdateOne {
+	puo.mutation.RemoveStockIDs(ids...)
+	return puo
+}
+
+// RemoveStock removes "stock" edges to Stock entities.
+func (puo *ProdutoUpdateOne) RemoveStock(s ...*Stock) *ProdutoUpdateOne {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return puo.RemoveStockIDs(ids...)
 }
 
 // ClearItens clears all "itens" edges to the ItemOrdem entity.
@@ -644,7 +682,7 @@ func (puo *ProdutoUpdateOne) sqlSave(ctx context.Context) (_node *Produto, err e
 	}
 	if puo.mutation.StockCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: true,
 			Table:   produto.StockTable,
 			Columns: []string{produto.StockColumn},
@@ -655,9 +693,25 @@ func (puo *ProdutoUpdateOne) sqlSave(ctx context.Context) (_node *Produto, err e
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
+	if nodes := puo.mutation.RemovedStockIDs(); len(nodes) > 0 && !puo.mutation.StockCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   produto.StockTable,
+			Columns: []string{produto.StockColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(stock.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
 	if nodes := puo.mutation.StockIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: true,
 			Table:   produto.StockTable,
 			Columns: []string{produto.StockColumn},
